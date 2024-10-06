@@ -1,0 +1,95 @@
+body {
+    width: 100vw;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('images/admindashbg.jpg'); /* Use appropriate URL to your image */
+    background-size: cover;
+    font-family: 'Nunito', sans-serif;
+}
+
+.sidebar {
+    width: 20%;
+    background-color: #000;
+    padding: 20px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+.sidebar .logo {
+    width: 100px;
+    margin-bottom: 40px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 20px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 400;
+    padding:20px;
+}
+
+.form-container {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 400px;
+    text-align: center;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.input-group input {
+    width: 48%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+input[type="text"], input[type="date"], input[type="time"] {
+    width: calc(100% - 20px); /* Make it full-width, less padding */
+}
+
+.submit-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    border: none;
+    background-color: #cfe2ff;
+    color: #333;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #bdd1f5;
+}
+
