@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Elections</title>
+    <link rel="stylesheet" href="{% static 'Admin/css/Reg_candidate.css' %}">
+</head>
+<body>
+    <!-- sidebar -->
+    <div class="sidebar">
+        <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo">
+        <ul>
+            <li><a href="{% url 'admin:admin_dashboard' %}">Home</a></li>
+            <li><a href="{% url 'admin:register_election' %}">Elections</a></li>
+            <li><a href="#">Register Voters</a></li>
+            <li><a href="#">Users</a></li>
+            <li><a href="#">Election Reports</a></li>
+            <li><a href="#">Logout</a></li>
+        </ul>
+    </div>
+    <div class="form-container">
+        <h2>Add Election Candidate</h2>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'admin:register_candidate' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="photo">Candidate Photo:</label>
+                <input type="file" id="photo" name="photo" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Candidate Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="election">Election:</label>
+                <select id="election" name="election" required>
+                    {% for election in elections %}
+                    <option value="{{ election.id }}">{{ election.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="color">Select Color:</label>
+                <input type="color" id="color" name="color" required>
+            </div>
+            <button type="submit" class="btn">Add Candidate</button>
+        </form>
+    </div>
+
+</body>
+</html>

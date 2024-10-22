@@ -15,6 +15,6 @@ my_admin_site.register(User)
 my_admin_site.register(Group)
 my_admin_site.register(Candidate)
 my_admin_site.register(Election)
-my_admin_site.register(Ongoing_Election)
+
 
 

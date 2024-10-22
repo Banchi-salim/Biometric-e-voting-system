@@ -56,5 +56,27 @@ def register_election(request):
             end_time=end_time
         )
         messages.success(request, 'Election created successfully.')
-        return redirect('Admin/Reg_election.html')  # Redirect to the same form or dashboard
+        return redirect('admin:register_election')  # Redirect to the same form or dashboard
     return render(request, 'Admin/Reg_election.html')
+
+
+def register_candidate(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        election_id = request.POST.get('election')
+        color = request.POST.get('color')
+        photo = request.FILES.get('photo')
+
+        try:
+            election = Election.objects.get(id=election_id)
+            candidate = Candidate(name=name, photo=photo, election=election)
+            candidate.save()
+
+            messages.success(request, 'Candidate added successfully!')
+            return redirect('admin:register_candidate')
+        except Election.DoesNotExist:
+            messages.error(request, 'Election not found.')
+            return redirect('admin:register_candidate')
+
+    elections = Election.objects.all()
+    return render(request, 'Admin/Reg_candidate.html', {'elections': elections})

@@ -84,3 +84,41 @@ button {
 button:hover {
     background-color: #3399ff;
 }
+.popup-message {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: #f44336; /* Red background for error */
+            color: white;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-family: Arial, sans-serif;
+        }
+
+        .popup-message.success {
+            background-color: #4CAF50; /* Green for success */
+        }
+
+        .popup-message.error {
+            background-color: #f44336; /* Red for error */
+        }
+
+        .popup-message.info {
+            background-color: #2196F3; /* Blue for info */
+        }
+
+        .popup-message.warning {
+            background-color: #ff9800; /* Orange for warnings */
+        }
+
+        /* Animation to fade out the popup */
+        @keyframes fadeOut {
+            from {opacity: 1;}
+            to {opacity: 0;}
+        }
+
+
