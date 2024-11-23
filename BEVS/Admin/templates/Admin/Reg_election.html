@@ -1,42 +1,28 @@
+{% extends "admin/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Elections</title>
-    <link rel="stylesheet" href="{% static 'Admin/css/Reg_election.css' %}">
-</head>
-<body>
-    <!-- sidebar -->
-    <div class="sidebar">
-        <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo">
-        <ul>
-            <li><a href="Home.html">Home</a></li>
-            <li><a href="#">Candidates</a></li>
-            <li><a href="#">Register Voters</a></li>
-            <li><a href="#">Users</a></li>
-            <li><a href="#">Election Reports</a></li>
-            <li><a href="#">Logout</a></li>
-        </ul>
-    </div>
-    <div class="form-container">
-        <form method="POST" action="{% url 'admin:register_election' %}">
-            {% csrf_token %}
-            <h2>Register Elections:</h2>
-            <div class="input-group">
-                <input type="text" name="election_name" placeholder="Election Name" required>
-            </div>
-            <div class="input-group">
-                <input type="date" name="start_date" placeholder="Start date" required>
-                <input type="date" name="end_date" placeholder="End date" required>
-            </div>
-            <div class="input-group">
-                <input type="time" name="start_time" placeholder="Start Time" required>
-                <input type="time" name="end_time" placeholder="End Time" required>
-            </div>
-            <button type="submit" class="submit-btn">ADD</button>
-        </form>
-    </div>
-</body>
-</html>
+
+{% block title %}Register Elections{% endblock %}
+
+{% block content %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'Admin/css/reg_election.css'%}">
+{% endblock %}
+<div class="form-container">
+    <form method="POST" action="{% url 'admin:register_election' %}">
+        {% csrf_token %}
+        <h2>Register Elections:</h2>
+        <div class="input-group">
+            <input type="text" name="election_name" placeholder="Election Name" required>
+        </div>
+        <div class="input-group">
+            <input type="date" name="start_date" placeholder="Start date" required>
+            <input type="date" name="end_date" placeholder="End date" required>
+        </div>
+        <div class="input-group">
+            <input type="time" name="start_time" placeholder="Start Time" required>
+            <input type="time" name="end_time" placeholder="End Time" required>
+        </div>
+        <button type="submit" class="submit-btn">ADD</button>
+    </form>
+</div>
+{% endblock %}

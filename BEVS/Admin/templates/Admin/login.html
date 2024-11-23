@@ -9,15 +9,17 @@
     <link rel="stylesheet" href="{% static 'Admin/css/login.css' %}">
 </head>
 <body>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li
+            {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
 <div class="login-container">
-    {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li
-        {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+
     <div class="login-left">
         <!-- <img src="{% static 'admin/images/login-left.png' %}" alt="img"> -->
     </div>

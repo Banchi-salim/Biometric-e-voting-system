@@ -2,10 +2,25 @@ from datetime import datetime, timedelta
 
 from django.db import models
 from django.utils import timezone
+
+
+class Election(models.Model):
+    name = models.CharField(max_length=100, default='Election')
+    start_date = models.DateField(default=timezone.now)
+    end_date = models.DateField(default=timezone.now)
+    start_time = models.TimeField(default=timezone.now().time())
+    end_time = models.TimeField(default=(timezone.now() + timedelta(hours=2)).time())
+
+    def __str__(self):
+        return self.name
+
+
 class Candidate(models.Model):
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='candidates/')
     votes = models.PositiveIntegerField(default=0)
+    election = models.ForeignKey(Election, on_delete=models.CASCADE)
+    color = models.CharField(max_length=7)  # HEX color code
 
     def __str__(self):
         return self.name
@@ -33,12 +48,14 @@ class Ongoing_Election(models.Model):
 
         super(Ongoing_Election, self).save(*args, **kwargs)
 
-class Election(models.Model):
-    name = models.CharField(max_length=100, default='Election')
-    start_date = models.DateField(default=timezone.now)
-    end_date = models.DateField(default=timezone.now)
-    start_time = models.TimeField(default=timezone.now().time())
-    end_time = models.TimeField(default=(timezone.now() + timedelta(hours=2)).time())
+
+class Voter(models.Model):
+    name = models.CharField(max_length=255)
+    dob = models.DateField()
+    address = models.TextField()
+    profile_image = models.ImageField(upload_to='voter_images/', null=True, blank=True)
+    fingerprint = models.BinaryField(null=True, blank=True)  # Store raw fingerprint data
 
     def __str__(self):
         return self.name
+

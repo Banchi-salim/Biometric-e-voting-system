@@ -1,0 +1,41 @@
+{% extends 'Admin/base.html' %}
+{% load static %}
+
+
+{% block title %}Add Election Candidate{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'Admin/css/reg_candidates.css'%}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Add Election Candidate</h1>
+    <form action="{% url 'admin:register_candidates' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="candidate_name">Candidate Name:</label>
+            <input type="text" id="candidate_name" name="candidate_name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="election">Election:</label>
+            <select id="election" name="election" required>
+                {% for election in elections %}
+                    <option value="{{ election.id }}">{{ election.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="color">Select Color:</label>
+            <input type="color" id="color" name="color" required>
+        </div>
+
+        <div class="form-group">
+            <label for="candidate_image">Upload Image:</label>
+            <input type="file" id="candidate_image" name="candidate_image" accept="image/*" required>
+        </div>
+        <button type="submit" class="submit-btn">Add Candidate</button>
+    </form>
+</div>
+{% endblock %}
