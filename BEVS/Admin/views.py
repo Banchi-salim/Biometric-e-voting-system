@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.baseconv import base64
 
 from .models import *
 
@@ -56,27 +57,63 @@ def register_election(request):
             end_time=end_time
         )
         messages.success(request, 'Election created successfully.')
-        return redirect('admin:register_election')  # Redirect to the same form or dashboard
+        return redirect('Admin/Reg_election.html')  # Redirect to the same form or dashboard
     return render(request, 'Admin/Reg_election.html')
 
 
-def register_candidate(request):
+def add_candidate(request):
+    # Fetch all elections from the database
+    elections = Election.objects.all()
+
     if request.method == 'POST':
-        name = request.POST.get('name')
+        candidate_name = request.POST.get('candidate_name')
         election_id = request.POST.get('election')
         color = request.POST.get('color')
-        photo = request.FILES.get('photo')
+        candidate_image = request.FILES.get('candidate_image')
 
-        try:
-            election = Election.objects.get(id=election_id)
-            candidate = Candidate(name=name, photo=photo, election=election)
-            candidate.save()
+        # You can now process the data and store it in the database
+        election = Election.objects.get(id=election_id)
 
-            messages.success(request, 'Candidate added successfully!')
-            return redirect('admin:register_candidate')
-        except Election.DoesNotExist:
-            messages.error(request, 'Election not found.')
-            return redirect('admin:register_candidate')
+        # Save candidate data
+        candidate = Candidate(
+            name=candidate_name,
+            election=election,
+            color=color,
+            image=candidate_image  # Assuming you've added an image field to the Candidate model
+        )
+        candidate.save()
 
-    elections = Election.objects.all()
-    return render(request, 'Admin/Reg_candidate.html', {'elections': elections})
+        messages.success(request, "Candidate added successfully!")
+        return redirect('add_candidate')  # Redirect back to the form page or another page
+
+    return render(request, 'admin/reg_candidates.html', {'elections': elections})
+
+
+def register_voter(request):
+    if request.method == 'POST':
+        # Get voter data from the form
+        name = request.POST.get('name')
+        dob = request.POST.get('dob')
+        address = request.POST.get('address')
+        profile_image = request.FILES.get('profile_image')
+        fingerprint_data = request.POST.get('fingerprint_data')  # The fingerprint data (image/template)
+
+        # Decode the fingerprint data (if it's base64 encoded)
+        # Here, we're assuming the fingerprint data is base64-encoded
+        if fingerprint_data:
+            fingerprint_data = base64.b64decode(fingerprint_data)
+
+        # Save the voter data along with the fingerprint data
+        voter = Voter(
+            name=name,
+            dob=dob,
+            address=address,
+            profile_image=profile_image,
+            fingerprint=fingerprint_data  # Store the raw fingerprint data in the model
+        )
+        voter.save()
+
+        messages.success(request, "Voter registration successful!")
+        return redirect('register_voter')  # Redirect back to the registration page
+
+    return render(request, 'admin/reg_voters.html')
