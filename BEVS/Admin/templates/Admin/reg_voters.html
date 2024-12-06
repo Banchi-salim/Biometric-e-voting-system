@@ -1,4 +1,5 @@
 {% extends 'Admin/base.html' %}
+{% load static %}
 
 {% block title %}Voter Registration{% endblock %}
 
@@ -39,22 +40,8 @@
 </div>
 
 <!-- Include SDK JS file -->
-<script>
-    function captureFingerprint() {
-        try {
-            // Initialize the fingerprint capture
-            var fingerprintScanner = new DigitalPersona.FingerprintScanner();
-
-            // Capture the fingerprint
-            fingerprintScanner.capture(function(fingerprintData) {
-                // The fingerprintData is the raw fingerprint template or image data
-                // Set the fingerprint data in the hidden input field
-                document.getElementById("fingerprint_data").value = fingerprintData;
-                alert("Fingerprint captured successfully.");
-            });
-        } catch (error) {
-            alert("Error capturing fingerprint: " + error.message);
-        }
-    }
-</script>
+<script src="{% static 'js/es6-shim.js' %}"></script>
+<script src="{% static 'js/websdk.client.bundle.min.js' %}"></script>
+<script src="{% static 's/fingerprint.sdk.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
 {% endblock %}
