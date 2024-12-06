@@ -1,29 +1,8 @@
+{% extends 'Admin/base.html' %}
 {% load static %}
-<!-- admin_dashboard.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Home</title>
-    <link rel="stylesheet" href="{% static 'Admin/css/Home.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-
-    <!-- sidebar -->
-    <div class="sidebar">
-        <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo">
-        <ul>
-            <li><a href="{% url 'admin:register_election' %}">Elections</a></li>
-            <li><a href="{% url 'admin:register_candidates' %}">Candidates</a></li>
-            <li><a href="#">Register Voters</a></li>
-            <li><a href="#">Users</a></li>
-            <li><a href="#">Election Reports</a></li>
-            <li><a href="#">Logout</a></li>
-        </ul>
-    </div>
-
+{% block title %}Admin Dashboard - Home{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'Admin/css/home.css' %}">{% endblock %}
+{% block content %}
 
     <!-- welcome text div -->
     <div class="welcometxt">
@@ -54,7 +33,7 @@
             </div>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // JavaScript to initialize the carousel and dynamically update charts
         document.addEventListener("DOMContentLoaded", function () {
@@ -90,5 +69,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}

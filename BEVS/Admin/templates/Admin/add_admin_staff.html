@@ -1,0 +1,64 @@
+{% extends 'Admin/base.html' %}
+{% load static %}
+{% block title %}Add Admin/Staff{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'Admin/css/add_admin_staff.css' %}">{% endblock %}
+
+{% block content %}
+<div class="add-admin-staff-container">
+    <h1>Add Admin/Staff</h1>
+    <form id="addAdminStaffForm" action="{% url 'admin:add_admin_staff' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="profile-section">
+            <label for="profile_image">
+                <img id="profilePreview" src="{% static 'images/default-profile.png' %}" alt="Profile Picture">
+                <input type="file" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage()" hidden>
+            </label>
+        </div>
+        <div class="form-section">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="dob">DOB:</label>
+                <input type="date" id="dob" name="dob" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" required></textarea>
+            </div>
+        </div>
+        <div class="access-control">
+            <p>Access Control:</p>
+            <label><input type="checkbox" name="access_control" value="elections"> Elections</label>
+            <label><input type="checkbox" name="access_control" value="candidates"> Candidates</label>
+            <label><input type="checkbox" name="access_control" value="voters"> Voters</label>
+            <label><input type="checkbox" name="access_control" value="user"> User</label>
+            <label><input type="checkbox" name="access_control" value="reports"> Reports</label>
+        </div>
+        <button type="submit" class="submit-btn">Add</button>
+    </form>
+</div>
+<script>
+    function previewImage() {
+        const fileInput = document.getElementById('profile_image');
+        const profilePreview = document.getElementById('profilePreview');
+        const file = fileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                profilePreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+</script>
+{% endblock %}

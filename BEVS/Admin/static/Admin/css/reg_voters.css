@@ -1,0 +1,111 @@
+h1 {
+    text-align: center;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+/* Form Container */
+.registration-form-container {
+    max-width: 800px;
+    margin: 50px auto;
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="file"],
+.form-group textarea,
+button,
+.form-group button {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    outline: none;
+}
+
+textarea {
+    resize: none;
+    height: 80px;
+}
+
+/* Buttons */
+button,
+.form-group button {
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+button:hover,
+.form-group button:hover {
+    background: #45a049;
+}
+
+/* File Input */
+.form-group input[type="file"] {
+    padding: 5px;
+}
+
+/* Submit Button */
+.submit-btn {
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .registration-form-container {
+        width: 90%;
+        margin: 20px auto;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    button,
+    .form-group button {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    button,
+    .form-group button {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .form-group textarea {
+        font-size: 14px;
+    }
+}

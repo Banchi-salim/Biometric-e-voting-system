@@ -1,0 +1,26 @@
+{% extends 'Admin/base.html' %}
+{% load static %}
+{% block title %}Election Reports{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'Admin/css/election_reports.css' %}">{% endblock %}
+{% block content %}
+<div class="reports-container">
+    <h1>Election Reports</h1>
+    <div class="report-list">
+        {% for report in reports %}
+        <div class="report-card">
+            <h2>{{ report.election.name }}</h2>
+            <p>Election Date: {{ report.election.start_date }} to {{ report.election.end_date }}</p>
+            <p>Total Voters: {{ report.total_voters }}</p>
+            <p>Total Votes Cast: {{ report.total_votes_cast }}</p>
+            <p>Candidates:</p>
+            <ul>
+                {% for candidate in report.election.candidate_set.all %}
+                <li>{{ candidate.name }} - {{ candidate.votes }} votes</li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'download_report' report.id %}" class="download-btn">Download Report</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

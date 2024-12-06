@@ -1,0 +1,28 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Monitoring</title>
+    <link rel="stylesheet" href="{% static 'Voting/css/election_monitoring.css' %}">
+</head>
+<body>
+<div class="container">
+    <h1>Election Monitoring</h1>
+    <ul>
+        {% for election in ongoing_elections %}
+        <li>
+            <h2>{{ election.title }}</h2>
+            <ul>
+                {% for candidate in election.candidates.all %}
+                <li>{{ candidate.name }}: {{ candidate.votes }} votes</li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+</body>
+</html>

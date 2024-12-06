@@ -1,11 +1,12 @@
+import csv
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-#from django.utils.baseconv import base64
+# from django.utils.baseconv import base64
 
 from .models import *
 
@@ -101,7 +102,7 @@ def register_voter(request):
         # Decode the fingerprint data (if it's base64 encoded)
         # Here, we're assuming the fingerprint data is base64-encoded
         if fingerprint_data:
-            fingerprint_data = base64.b64decode(fingerprint_data)
+            fingerprint_data = ""#base64.b64decode(fingerprint_data)
 
         # Save the voter data along with the fingerprint data
         voter = Voter(
@@ -117,3 +118,66 @@ def register_voter(request):
         return redirect('register_voter')  # Redirect back to the registration page
 
     return render(request, 'admin/reg_voters.html')
+
+
+def add_admin_staff(request):
+    if request.method == 'POST':
+        name = request.POST['name']
+        dob = request.POST['dob']
+        email = request.POST['email']
+        phone = request.POST['phone']
+        address = request.POST['address']
+        access_control = request.POST.getlist('access_control')
+        profile_image = request.FILES.get('profile_image')
+
+        AdminStaff.objects.create(
+            name=name,
+            dob=dob,
+            email=email,
+            phone=phone,
+            address=address,
+            profile_image=profile_image,
+            access_control=access_control
+        )
+        messages.success(request, 'Admin/Staff added successfully.')
+        return redirect('add_admin_staff')
+
+    return render(request, 'Admin/add_admin_staff.html')
+
+
+
+def election_reports(request):
+    # Get all completed elections and their reports
+    reports = ElectionReport.objects.select_related('election').all()
+    return render(request, 'Admin/election_reports.html', {'reports': reports})
+
+
+def download_report(request, report_id):
+    report = get_object_or_404(ElectionReport, id=report_id)
+    candidates = Candidate.objects.filter(election=report.election)
+
+    # Create the CSV file
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{report.election.name}_report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Election Name', report.election.name])
+    writer.writerow(['Election Date', report.election.start_date, 'to', report.election.end_date])
+    writer.writerow(['Total Voters', report.total_voters])
+    writer.writerow(['Total Votes Cast', report.total_votes_cast])
+    writer.writerow([])  # Blank row
+    writer.writerow(['Candidate Name', 'Votes'])
+
+    for candidate in candidates:
+        writer.writerow([candidate.name, candidate.votes])
+
+    return response
+
+
+def logout_view(request):
+    """
+    Log the user out and redirect to the login page (or home page).
+    """
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('admin:admin_login')

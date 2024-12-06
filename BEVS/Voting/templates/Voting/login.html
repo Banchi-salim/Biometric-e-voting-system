@@ -1,0 +1,30 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voter Login</title>
+    <link rel="stylesheet" href="{% static 'Voting/css/login.css' %}">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-header">
+        <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo">
+    </div>
+    <div class="login-content">
+        <h2>Scan fingerprint to login</h2>
+        <div class="fingerprint-container">
+            <a href="{% url 'voting_page' %}">
+                <button id="scanFingerprint" onclick="scanFingerprint()">
+                    <img src="{% static 'images/fingerprint-icon.png' %}" alt="Fingerprint Icon">
+                </button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'Voting/js/login.js' %}"></script>
+</body>
+</html>

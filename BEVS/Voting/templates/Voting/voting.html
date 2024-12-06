@@ -1,0 +1,78 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Page</title>
+    <link rel="stylesheet" href="{% static 'Voting/css/voting.css' %}">
+</head>
+<body>
+    <div class="voting-container">
+        <!-- nav bar top -->
+        <div class="top-bar">
+            <img src="{% static 'Voting/images/logo.png' %}" alt="Logo">
+        </div>
+        <!-- Slider Section -->
+        <div class="slider">
+            <button class="arrow left" onclick="previousSlide()">&#10094;</button>
+            <div class="slider-content">
+                {% for election in ongoing_elections %}
+                <div class="election-slide">
+                    <h2>On Going Election</h2>
+                    <h3>{{ election.title }}</h3>
+                    <div class="candidates">
+                        {% for candidate in election.candidates.all %}
+                        <div class="candidate">
+                            <img src="{{ candidate.photo.url }}" alt="{{ candidate.name }}">
+                            <p>{{ candidate.name }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="arrow right" onclick="nextSlide()">&#10095;</button>
+        </div>
+
+        <!-- Voting Form Section -->
+        <div class="vote-form">
+            <h1>Vote Below</h1>
+            <form id="voteForm" onsubmit="event.preventDefault(); openModal();" method="POST">
+                {% csrf_token %}
+                {% for election in ongoing_elections %}
+                <div class="election-vote">
+                    <h2>{{ election.title }}</h2>
+                    <div class="candidates">
+                        {% for candidate in election.candidates.all %}
+                        <div class="candidate-option">
+                            <label>
+                                <input type="radio" name="vote_{{ election.id }}" value="{{ candidate.id }}" required>
+                                <img src="{{ candidate.photo.url }}" alt="{{ candidate.name }}">
+                                <p>{{ candidate.name }}</p>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                <button type="submit" class="submit-btn">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Fingerprint Verification Modal -->
+    <div id="fingerprintModal" class="modal">
+        <div class="modal-content">
+            <h2>Verify Your Fingerprint</h2>
+            <p>Please scan your fingerprint to confirm your vote.</p>
+            <div class="fingerprint-scanner">
+                <button id="scanFingerprint" onclick="verifyFingerprint()">Scan Fingerprint</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'Voting/js/voting.js' %}"></script>
+</body>
+</html>
