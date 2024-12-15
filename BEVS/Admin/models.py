@@ -17,7 +17,7 @@ class Election(models.Model):
 
 class Candidate(models.Model):
     name = models.CharField(max_length=100)
-    photo = models.ImageField(upload_to='candidates/')
+    image = models.ImageField(upload_to='candidates/', null=True, blank=True)
     votes = models.PositiveIntegerField(default=0)
     election = models.ForeignKey(Election, on_delete=models.CASCADE, null=True)
     color = models.CharField(max_length=7, default="ffffff")  # HEX color code

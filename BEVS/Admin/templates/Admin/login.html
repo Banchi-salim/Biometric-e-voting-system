@@ -10,14 +10,29 @@
 </head>
 <body>
 {% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li
-            {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}
-    </li>
-    {% endfor %}
-</ul>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for message in messages %}
+        let iconType = "info"; // Default icon type
+        {% if "success" in message.tags %}
+        iconType = "success";
+        {% elif "error" in message.tags %}
+        iconType = "error";
+        {% elif "warning" in message.tags %}
+        iconType = "warning";
+        {% endif %}
+
+        Swal.fire({
+            icon: iconType,
+            title: '{{ message|escapejs }}'
+        });
+        {% endfor %}
+    });
+</script>
 {% endif %}
+
+
 <div class="login-container">
 
     <div class="login-left">

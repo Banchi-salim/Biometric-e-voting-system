@@ -11,14 +11,14 @@
 <body>
 <div class="login-container">
     <div class="login-header">
-        <img src="{% static 'images/logo.png' %}" alt="Logo" class="logo">
+        <img src="{% static 'Voting/css/images/logo.jpg' %}" alt="Logo" class="logo">
     </div>
     <div class="login-content">
         <h2>Scan fingerprint to login</h2>
         <div class="fingerprint-container">
             <a href="{% url 'voting_page' %}">
                 <button id="scanFingerprint" onclick="scanFingerprint()">
-                    <img src="{% static 'images/fingerprint-icon.png' %}" alt="Fingerprint Icon">
+                    <img src="{% static 'Voting/css/images/fingerprint.jpg' %}" alt="Fingerprint Icon">
                 </button>
             </a>
         </div>

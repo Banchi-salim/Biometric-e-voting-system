@@ -264,7 +264,7 @@ function sampleAcquired(s){
                 var decodedData = JSON.parse(Fingerprint.b64UrlToUtf8(sampleData));
                 localStorage.setItem("raw", Fingerprint.b64UrlTo64(decodedData.Data));
 
-                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:none">RAW Sample Acquired <br>'+Date()+'</div>';
+                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">RAW Sample Acquired <br>'+Date()+'</div>';
                 setTimeout('delayAnimate("animateText","table-cell")',100); 
 
                 disableEnableExport(false);
@@ -281,7 +281,7 @@ function sampleAcquired(s){
                 var decodedData = JSON.parse(Fingerprint.b64UrlToUtf8(sampleData));
                 localStorage.setItem("wsq","data:application/octet-stream;base64," + Fingerprint.b64UrlTo64(decodedData.Data));
 
-                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:none">WSQ Sample Acquired <br>'+Date()+'</div>';
+                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">WSQ Sample Acquired <br>'+Date()+'</div>';
                 setTimeout('delayAnimate("animateText","table-cell")',100);   
 
                 disableEnableExport(false);
@@ -296,7 +296,7 @@ function sampleAcquired(s){
                 var sampleData = Fingerprint.b64UrlTo64(samples[0].Data);
                 localStorage.setItem("intermediate", sampleData);
 
-                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:none">Intermediate Sample Acquired <br>'+Date()+'</div>';
+                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">Intermediate Sample Acquired <br>'+Date()+'</div>';
                 setTimeout('delayAnimate("animateText","table-cell")',100); 
 
                 disableEnableExport(false);
@@ -607,4 +607,62 @@ function delayAnimate(id,visibility)
    document.getElementById(id).style.display = visibility;
 }
 
+
+// Add this function to handle reader population on page load
+function populateReaders() {
+    var allReaders = test.getInfo();
+    allReaders.then(function (sucessObj) {
+        var readersDropDown = document.getElementById("readersDropDown");
+        readersDropDown.innerHTML = "<option value=''>Select Reader</option>";
+
+        sucessObj.forEach(function(reader) {
+            var option = document.createElement("option");
+            option.value = reader;
+            option.text = 'Digital Persona (' + reader + ')';
+            readersDropDown.add(option);
+        });
+
+        if (sucessObj.length === 1) {
+            readersDropDown.selectedIndex = 1;
+            selectChangeEvent();
+        }
+    }, function (error){
+        console.error("Error populating readers:", error.message);
+    });
+}
+
+// Modify the window.onload to call populateReaders
+window.onload = function () {
+    localStorage.clear();
+    test = new FingerprintSdkTest();
+    populateReaders();
+    disableEnable();
+    enableDisableScanQualityDiv("content-reader");
+    disableEnableExport(true);
+
+    // Initially disable start/stop buttons
+    $('#start').prop('disabled', true);
+    $('#stop').prop('disabled', true);
+};
+
+// Modify selectChangeEvent to handle reader selection
+function selectChangeEvent(){
+    var readersDropDownElement = document.getElementById("readersDropDown");
+    myVal = readersDropDownElement.options[readersDropDownElement.selectedIndex].value;
+
+    if(myVal === ""){
+        // No reader selected
+        $('#start').prop('disabled', true);
+        $('#stop').prop('disabled', true);
+        showMessage("Please select a reader");
+    } else {
+        // Reader selected
+        $('#start').prop('disabled', false);
+        $('#stop').prop('disabled', true);
+        showMessage("Reader selected. Ready to capture.");
+    }
+
+    onClear();
+    document.getElementById('imageGallery').innerHTML = "";
+}
 // For Download and formats ends

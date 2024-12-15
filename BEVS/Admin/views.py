@@ -58,7 +58,7 @@ def register_election(request):
             end_time=end_time
         )
         messages.success(request, 'Election created successfully.')
-        return redirect('Admin/Reg_election.html')  # Redirect to the same form or dashboard
+        return redirect('admin:register_election')  # Redirect to the same form or dashboard
     return render(request, 'Admin/Reg_election.html')
 
 
@@ -85,7 +85,7 @@ def add_candidate(request):
         candidate.save()
 
         messages.success(request, "Candidate added successfully!")
-        return redirect('add_candidate')  # Redirect back to the form page or another page
+        return redirect('admin:register_candidates')  # Redirect back to the form page or another page
 
     return render(request, 'admin/reg_candidates.html', {'elections': elections})
 

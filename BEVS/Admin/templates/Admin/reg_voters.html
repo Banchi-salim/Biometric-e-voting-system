@@ -1,19 +1,33 @@
 {% extends 'Admin/base.html' %}
 {% load static %}
 {% block title %}Voter Registration{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'Admin/css/reg_voters.css'%}">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'Admin/css/reg_voters.css'%}">
+<style>
+    #imagediv {
+        max-width: 300px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+    #imagediv img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="registration-form-container">
     <h1>Voter Registration</h1>
     <form id="registrationForm" action="{% url 'admin:register_voters' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        
+
         <div class="form-group">
             <label for="profile_image">Profile Picture:</label>
             <input type="file" id="profile_image" name="profile_image" accept="image/*" required>
         </div>
-        
+
         <div class="form-group">
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required>
@@ -30,18 +44,42 @@
         </div>
 
         <div class="form-group">
+            <label>Reader Selection:</label>
+            <select id="readersDropDown" onchange="selectChangeEvent()">
+                <option value="">Select Reader</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="fingerprint_data">Fingerprint:</label>
-            <button type="button" id="captureFingerprintBtn" onclick="captureFingerprint()">Capture Fingerprint</button>
+            <div class="fingerprint-controls">
+                <button type="button" id="start" onclick="onStart()">Start Capture</button>
+                <button type="button" id="stop" onclick="onStop()">Stop Capture</button>
+                <button type="button" id="save" onclick="saveFingerprint()">Save Fingerprint</button>
+            </div>
+            <div id="imagediv" class="fingerprint-preview"></div>
             <input type="hidden" name="fingerprint_data" id="fingerprint_data">
         </div>
-        
+
         <button type="submit" class="submit-btn">Submit</button>
     </form>
 </div>
 
 <!-- Include SDK JS file -->
-<script src="{% static 'js/es6-shim.js' %}"></script>
-<script src="{% static 'js/websdk.client.bundle.min.js' %}"></script>
-<script src="{% static 's/fingerprint.sdk.min.js' %}"></script>
-<script src="{% static 'js/app.js' %}"></script>
+<script src="{% static 'Admin/js/es6-shim.js' %}"></script>
+<script src="{% static 'Admin/js/websdk.client.bundle.min.js' %}"></script>
+<script src="{% static 'Admin/js/fingerprint.sdk.min.js' %}"></script>
+<script src="{% static 'Admin/js/app.js' %}"></script>
+
+<script>
+function saveFingerprint() {
+    var fingerprintImage = localStorage.getItem("imageSrc");
+    if (fingerprintImage) {
+        document.getElementById('fingerprint_data').value = fingerprintImage;
+        alert("Fingerprint saved successfully!");
+    } else {
+        alert("Please capture a fingerprint first.");
+    }
+}
+</script>
 {% endblock %}
