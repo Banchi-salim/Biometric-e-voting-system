@@ -12,20 +12,6 @@ body {
     align-items: center;
 }
 
-.container {
-    display: flex;
-    width: 800px;
-    height: 400px;
-    position: absolute;
-    top: 30%;
-    left: 35%;
-    transform: translateY(-50%, -50%);
-    background-color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius : 20px;
-
-}
-
 .sidebar {
     width: 20%;
     background-color: #000;
@@ -61,34 +47,43 @@ body {
     padding:20px;
 }
 
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 800px;
+    height: 400px;
+    position: absolute;
+    top: 30%;
+    left: 35%;
+    transform: translateY(-50%, -50%);
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
 .main-content {
     flex: 1;
     padding: 20px;
-    margin-left: 20%;
-}
-
-h2 {
-    margin-bottom: 20px;
-    align: center;
 }
 
 .carousel {
     display: flex;
-    overflow: auto;
+    flex-direction: column;
+    overflow-y: auto;
     width: 100%;
 }
 
 .carousel-item {
     background-color: white;
     border-radius: 8px;
-    margin-right: 20px;
+    margin-bottom: 20px;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .candidate {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     margin-right: 20px;
 }

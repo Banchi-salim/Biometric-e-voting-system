@@ -1,3 +1,5 @@
+from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule, SolarSchedule, ClockedSchedule
+from django.contrib.admin import AdminSite
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User, Group
 from .models import *
@@ -15,6 +17,11 @@ my_admin_site.register(User)
 my_admin_site.register(Group)
 my_admin_site.register(Candidate)
 my_admin_site.register(Election)
+my_admin_site.register(PeriodicTask)
+my_admin_site.register(IntervalSchedule)
+my_admin_site.register(CrontabSchedule)
+my_admin_site.register(SolarSchedule)
+my_admin_site.register(ClockedSchedule)
 
 
 

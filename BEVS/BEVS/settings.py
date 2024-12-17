@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'Admin',
     'Voting',
+    'django_celery_beat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -97,6 +98,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'iabdulsalim40@gmail.com'
+EMAIL_HOST_PASSWORD = 'qcig khwf fieq qioe'
+DEFAULT_FROM_EMAIL = 'iabdulsalim40@gmail.com'
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 

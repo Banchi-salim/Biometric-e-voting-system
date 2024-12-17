@@ -34,39 +34,5 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // JavaScript to initialize the carousel and dynamically update charts
-        document.addEventListener("DOMContentLoaded", function () {
-            const elections = JSON.parse('{{ elections|safe }}');
-
-            // Function to update vote data
-            function updateVoteData(electionId) {
-                fetch(`/vote-data/${electionId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const labels = Object.keys(data);
-                        const votes = Object.values(data);
-
-                        const ctx = document.getElementById(`voteChart-${electionId}`).getContext('2d');
-                        new Chart(ctx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: 'Votes',
-                                    data: votes,
-                                    backgroundColor: ['#28a745', '#dc3545']
-                                }]
-                            }
-                        });
-                    });
-            }
-
-            // Loop through each election and initialize the vote data
-            elections.forEach(election => {
-                updateVoteData(election.id);
-                setInterval(() => updateVoteData(election.id), 5000);  // Poll every 5 seconds
-            });
-        });
-    </script>
+    <script src="{% static 'Admin/js/vote_script.js'%}"></script>
 {% endblock %}

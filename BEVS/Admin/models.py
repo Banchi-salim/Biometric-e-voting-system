@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
-
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 
@@ -14,6 +13,25 @@ class Election(models.Model):
     def __str__(self):
         return self.name
 
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        # Save the Election first
+        super().save(*args, **kwargs)
+
+        # Check if an Ongoing_Election already exists for this Election
+        existing_ongoing = Ongoing_Election.objects.filter(election=self).first()
+
+        if not existing_ongoing:
+            # Deactivate any existing active Ongoing_Election
+            Ongoing_Election.objects.filter(is_active=True).update(is_active=False)
+
+            # Create the corresponding Ongoing_Election model
+            Ongoing_Election.objects.create(
+                title=f"{self.name} - Ongoing",
+                election=self,
+                is_active=False
+            )
+
 
 class Candidate(models.Model):
     name = models.CharField(max_length=100)
@@ -25,41 +43,90 @@ class Candidate(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        # Save the candidate first
+        super().save(*args, **kwargs)
+
+        # If the candidate is associated with an election, add to Ongoing_Election
+        if self.election:
+            try:
+                ongoing_election = Ongoing_Election.objects.get(election=self.election)
+                ongoing_election.candidates.add(self)
+            except Ongoing_Election.DoesNotExist:
+                # If no Ongoing_Election exists for this election, create one
+                ongoing_election = Ongoing_Election.objects.create(
+                    title=f"{self.election.name} - Ongoing",
+                    election=self.election
+                )
+                ongoing_election.candidates.add(self)
+
 
 class Ongoing_Election(models.Model):
     title = models.CharField(max_length=255)
     candidates = models.ManyToManyField('Candidate')  # Assuming you have a Candidate model
     election = models.OneToOneField('Election', on_delete=models.CASCADE)  # Link to the Election model
-    is_active = models.BooleanField(default=False)  # Default is False, but it can be auto-updated
+    is_active = models.BooleanField(default=False)  # Default is False, updated automatically
 
     def __str__(self):
         return self.title
 
+    from datetime import datetime, date
+
     def save(self, *args, **kwargs):
-        # Automatically set is_active based on current time and election date/time range
-        current_time = timezone.now()
-        if self.election.start_date <= current_time.date() <= self.election.end_date:
-            if (self.election.start_time <= current_time.time() <= self.election.end_time):
-                self.is_active = True
-            else:
-                self.is_active = False
+        current_time = datetime.now()
+
+        # Convert start_date to datetime.date if it's a string
+        if isinstance(self.election.start_date, str):
+            try:
+                start_date = datetime.strptime(self.election.start_date, '%Y-%m-%d').date()
+            except ValueError:
+                # Try alternative date formats if needed
+                start_date = datetime.strptime(self.election.start_date, '%m/%d/%Y').date()
+        else:
+            start_date = self.election.start_date
+
+        # Convert end_date to datetime.date if it's a string
+        if isinstance(self.election.end_date, str):
+            try:
+                end_date = datetime.strptime(self.election.end_date, '%Y-%m-%d').date()
+            except ValueError:
+                # Try alternative date formats if needed
+                end_date = datetime.strptime(self.election.end_date, '%m/%d/%Y').date()
+        else:
+            end_date = self.election.end_date
+
+        # Convert string times to datetime.time if necessary
+        if isinstance(self.election.start_time, str):
+            start_time = datetime.strptime(self.election.start_time, '%H:%M').time()
+        else:
+            start_time = self.election.start_time
+
+        if isinstance(self.election.end_time, str):
+            end_time = datetime.strptime(self.election.end_time, '%H:%M').time()
+        else:
+            end_time = self.election.end_time
+
+        # Compare dates and times
+        if (start_date <= current_time.date() <= end_date and
+                start_time <= current_time.time() <= end_time):
+            self.is_active = True
         else:
             self.is_active = False
 
-        super(Ongoing_Election, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class Voter(models.Model):
     name = models.CharField(max_length=255)
     dob = models.DateField()
     address = models.TextField()
+    email  = models.EmailField(null=True)
     profile_image = models.ImageField(upload_to='voter_images/', null=True, blank=True)
     fingerprint = models.BinaryField(null=True, blank=True)  # Store raw fingerprint data
     elections = models.ManyToManyField('Election', related_name="voters")  # Many-to-Many Relationship
 
     def __str__(self):
         return self.name
-
 
 
 class AdminStaff(models.Model):
@@ -97,5 +164,3 @@ class ElectionReport(models.Model):
         self.total_votes_cast = self.calculate_total_votes_cast()
         self.total_voters = self.calculate_total_voters()
         super(ElectionReport, self).save(*args, **kwargs)
-
-

@@ -2,6 +2,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -95,27 +96,47 @@ def register_voter(request):
         # Get voter data from the form
         name = request.POST.get('name')
         dob = request.POST.get('dob')
+        email = request.POST.get('email')
         address = request.POST.get('address')
         profile_image = request.FILES.get('profile_image')
-        fingerprint_data = request.POST.get('fingerprint_data')  # The fingerprint data (image/template)
+        fingerprint_data = request.POST.get('fingerprint_data')  # Fingerprint data (image/template)
 
-        # Decode the fingerprint data (if it's base64 encoded)
-        # Here, we're assuming the fingerprint data is base64-encoded
+        # Decode fingerprint data if required
         if fingerprint_data:
-            fingerprint_data = ""#base64.b64decode(fingerprint_data)
+            fingerprint_data = ""  # Example placeholder: base64.b64decode(fingerprint_data)
 
-        # Save the voter data along with the fingerprint data
-        voter = Voter(
-            name=name,
-            dob=dob,
-            address=address,
-            profile_image=profile_image,
-            fingerprint=fingerprint_data  # Store the raw fingerprint data in the model
-        )
-        voter.save()
+        try:
+            # Save the voter data along with the fingerprint data
+            voter = Voter(
+                name=name,
+                dob=dob,
+                address=address,
+                email=email,
+                profile_image=profile_image,
+                fingerprint=fingerprint_data
+            )
+            voter.save()  # Save voter instance to the database
 
-        messages.success(request, "Voter registration successful!")
-        return redirect('register_voter')  # Redirect back to the registration page
+            # Send mail after saving the voter
+            send_mail(
+                subject=f"Successful Registration On BEVS",
+                message=f"Hi {name},\n\n"
+                        f"You have successfully been registered on BEVS:\n\n"
+                        f"Name: {name}\n"
+                        f"DOB: {dob}\n"
+                        f"Address: {address}\n\n"
+                        f"You will be updated regularly.",
+                from_email='no-reply@ncdc.gov.ng',
+                recipient_list=[email],
+                fail_silently=True
+            )
+
+            messages.success(request, "Voter registration successful!")
+            return redirect('register_voter')  # Redirect back to the registration page
+
+        except Exception as e:
+            print(f"Error during voter registration: {e}")
+            messages.error(request, "An error occurred during registration. Please try again.")
 
     return render(request, 'admin/reg_voters.html')
 
@@ -181,3 +202,4 @@ def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('admin:admin_login')
+
