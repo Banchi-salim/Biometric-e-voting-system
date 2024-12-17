@@ -10,7 +10,7 @@ def manage_election_status():
 
     current_time = timezone.now()
 
-    # Activate or deactivate elections based on time
+    # Loop through all elections to manage their status
     for election in Election.objects.all():
         start_datetime = timezone.make_aware(
             timezone.datetime.combine(election.start_date, election.start_time)
@@ -20,16 +20,22 @@ def manage_election_status():
         )
 
         try:
-            ongoing_election = OngoingElection.objects.get(election=election)
-        except OngoingElection.DoesNotExist:
-            # If no ongoing election exists, skip
-            continue
+            # Get or create the OngoingElection record for the election
+            ongoing_election, created = OngoingElection.objects.get_or_create(election=election)
 
-        if start_datetime <= current_time <= end_datetime:
-            # Activate the election if it falls within the current time
-            ongoing_election.is_active = True
-        else:
-            # Deactivate otherwise
-            ongoing_election.is_active = False
+            # Check election time to determine status
+            if start_datetime <= current_time <= end_datetime:
+                # Activate the election if it falls within the current time
+                ongoing_election.is_active = True
+            elif current_time > end_datetime:
+                # Deactivate if the current time has passed the end time
+                ongoing_election.is_active = False
+            else:
+                # Deactivate if the election hasn't started yet
+                ongoing_election.is_active = False
 
-        ongoing_election.save()
+            # Save changes to the OngoingElection instance
+            ongoing_election.save()
+
+        except Exception as e:
+            print(f"Error managing election status for {election.name}: {e}")

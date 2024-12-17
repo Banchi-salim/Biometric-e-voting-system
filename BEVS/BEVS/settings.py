@@ -131,3 +131,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'admin:admin_login'
 LOGIN_REDIRECT_URL = 'admin:admin_dashboard'
+
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'manage-election-status-every-minute': {
+        'task': 'your_app.tasks.manage_election_status',
+        'schedule': crontab(minute='*/1'),  # Run every minute
+    },
+}
