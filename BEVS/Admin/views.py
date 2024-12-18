@@ -161,7 +161,7 @@ def add_admin_staff(request):
             access_control=access_control
         )
         messages.success(request, 'Admin/Staff added successfully.')
-        return redirect('add_admin_staff')
+        return redirect('admin:add_admin_staff')
 
     return render(request, 'Admin/add_admin_staff.html')
 
