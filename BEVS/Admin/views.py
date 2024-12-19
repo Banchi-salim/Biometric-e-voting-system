@@ -2,6 +2,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -143,25 +144,40 @@ def register_voter(request):
 
 def add_admin_staff(request):
     if request.method == 'POST':
-        name = request.POST['name']
-        dob = request.POST['dob']
-        email = request.POST['email']
-        phone = request.POST['phone']
-        address = request.POST['address']
-        access_control = request.POST.getlist('access_control')
-        profile_image = request.FILES.get('profile_image')
+        name = request.POST.get('name')
+        dob = request.POST.get('dob')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        address = request.POST.get('address')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        access_control = request.POST.getlist('access_control')  # Get selected checkboxes
 
-        AdminStaff.objects.create(
-            name=name,
+        # Create user
+        user = User.objects.create_user(username=username, email=email, password=password)
+        user.first_name = name
+        user.save()
+
+        # Create staff profile
+        profile_image = request.FILES.get('profile_image')
+        staff_profile = AdminStaff.objects.create(
+            user=user,
             dob=dob,
-            email=email,
             phone=phone,
             address=address,
             profile_image=profile_image,
-            access_control=access_control
         )
-        messages.success(request, 'Admin/Staff added successfully.')
-        return redirect('admin:add_admin_staff')
+
+        # Assign permissions based on access control
+        staff_profile.can_access_elections = 'elections' in access_control
+        staff_profile.can_access_candidates = 'candidates' in access_control
+        staff_profile.can_access_voters = 'voters' in access_control
+        staff_profile.can_access_users = 'user' in access_control
+        staff_profile.can_access_reports = 'reports' in access_control
+
+        staff_profile.save()
+
+        return redirect('admin:staff_list')  # Redirect to the staff list page.
 
     return render(request, 'Admin/add_admin_staff.html')
 

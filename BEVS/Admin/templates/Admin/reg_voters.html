@@ -4,87 +4,219 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'Admin/css/reg_voters.css'%}">
 <style>
-    #imagediv {
-        max-width: 300px;
-        margin: 10px 0;
-        border: 1px solid #ddd;
-        padding: 10px;
+    .registration-form-container {
+        display: flex;
+        height: fit-content;
+        padding: 20px;
+        max-width: 900px;
+        box-sizing: border-box;
+        position: absolute;
+        left: 25%;
+        top: 0;
     }
-    #imagediv img {
-        max-width: 100%;
-        height: auto;
+
+    .form-wrapper {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 10px;
+        width: 90%;
+        max-width: 1200px;
+        height: fit-content;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 10px auto;
+    }
+
+    .form-wrapper h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    form {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr; /* 3 equal columns */
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-weight: semi-bold;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%; /* Ensures all inputs are the same width */
+        padding: 10px; /* Adds padding for consistent height */
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 0; /* Removes excess margin */
+        box-sizing: border-box; /* Ensures padding doesn't affect overall width */
+    }
+
+    .form-group textarea {
+        height: 40px;
+    }
+
+    .fingerprint-controls {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .submit-btn {
+        grid-column: 1 / -1; /* Full width button */
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .submit-btn:hover {
+        background-color: #45a049;
+    }
+
+    #imagediv {
+        grid-column: 1 / -1; /* Makes fingerprint preview full width */
+        text-align: center;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+        height: 120px;
+        border-radius: 5px;
     }
 </style>
+
 {% endblock %}
 
 {% block content %}
 <div class="registration-form-container">
-    <h1>Voter Registration</h1>
-    <form id="registrationForm" action="{% url 'admin:register_voters' %}" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+    <div class="form-wrapper">
+        <h1>Voter Registration</h1>
 
-        <div class="form-group">
-            <label for="profile_image">Profile Picture:</label>
-            <input type="file" id="profile_image" name="profile_image" accept="image/*" required>
-        </div>
+        <form id="registrationForm" action="{% url 'admin:register_voters' %}" method="POST"
+              enctype="multipart/form-data">
+            {% csrf_token %}
 
-        <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="text" id="email" name="email" required>
-        </div>
-
-        <div class="form-group">
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" required>
-        </div>
-
-        <div class="form-group">
-            <label for="address">Address:</label>
-            <textarea id="address" name="address" required></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Reader Selection:</label>
-            <select id="readersDropDown" onchange="selectChangeEvent()">
-                <option value="">Select Reader</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="fingerprint_data">Fingerprint:</label>
-            <div class="fingerprint-controls">
-                <button type="button" id="start" onclick="onStart()">Start Capture</button>
-                <button type="button" id="stop" onclick="onStop()">Stop Capture</button>
-                <button type="button" id="save" onclick="saveFingerprint()">Save Fingerprint</button>
+            <!-- Left Column -->
+            <div class="form-group">
+                <label for="profile_image">Profile Picture:</label>
+                <input type="file" id="profile_image" name="profile_image" accept="image/*" required>
             </div>
-            <div id="imagediv" class="fingerprint-preview"></div>
-            <input type="hidden" name="fingerprint_data" id="fingerprint_data">
-        </div>
 
-        <button type="submit" class="submit-btn">Submit</button>
-    </form>
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" name="dob" required>
+            </div>
+
+            <!-- Right Column -->
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" rows="4" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Reader Selection:</label>
+                <select id="readersDropDown" onchange="selectChangeEvent()">
+                    <option value="">Select Reader</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fingerprint_data">Fingerprint:</label>
+                <div class="fingerprint-controls">
+                    <button type="button" id="start" onclick="onStart()">Start Capture</button>
+                    <button type="button" id="stop" onclick="onStop()">Stop Capture</button>
+                    <button type="button" id="save" onclick="saveFingerprint()">Save Fingerprint</button>
+                </div>
+                <label for="fingerprint_format">Select Format:</label>
+                <select id="fingerprint_format" name="fingerprint_format">
+                    <option value="Raw">Raw</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Compressed">Compressed</option>
+                    <option value="PngImage">PngImage</option>
+                </select>
+            </div>
+
+
+            <div class="form-group">
+                <div id="imagediv"></div>
+                <input type="hidden" name="fingerprint_data" id="fingerprint_data">
+            </div>
+
+            <!-- Full Width Submit Button -->
+            <button type="submit" class="submit-btn">Submit Voter Registration</button>
+        </form>
+    </div>
 </div>
+
 
 <!-- Include SDK JS file -->
 <script src="{% static 'Admin/js/es6-shim.js' %}"></script>
 <script src="{% static 'Admin/js/websdk.client.bundle.min.js' %}"></script>
 <script src="{% static 'Admin/js/fingerprint.sdk.min.js' %}"></script>
-<script src="{% static 'Admin/js/app.js' %}"></script>
+<script src="{% static 'Admin/js/app1.js' %}"></script>
 
 <script>
-function saveFingerprint() {
-    var fingerprintImage = localStorage.getItem("imageSrc");
-    if (fingerprintImage) {
-        document.getElementById('fingerprint_data').value = fingerprintImage;
-        alert("Fingerprint saved successfully!");
-    } else {
-        alert("Please capture a fingerprint first.");
+    function saveFingerprint() {
+        var fingerprintImage = localStorage.getItem("imageSrc");
+        if (fingerprintImage) {
+            document.getElementById('fingerprint_data').value = fingerprintImage;
+
+            // Optional: Display success message with toastr or custom alert
+            alert("Fingerprint captured and saved successfully!");
+        } else {
+            alert("Please capture a fingerprint first.");
+        }
     }
-}
+
+    // Disable submit button until fingerprint is captured
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitBtn = document.querySelector('.submit-btn');
+        const fingerprintDataInput = document.getElementById('fingerprint_data');
+
+        // Initially disable submit button
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        submitBtn.style.cursor = 'not-allowed';
+
+        // Listen for changes in fingerprint data
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                    if (fingerprintDataInput.value) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                    } else {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                }
+            });
+        });
+
+        observer.observe(fingerprintDataInput, { attributes: true });
+    });
+    document.getElementById("fingerprint_format").addEventListener("change", assignFormat);
 </script>
 {% endblock %}

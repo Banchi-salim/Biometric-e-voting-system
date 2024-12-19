@@ -130,6 +130,7 @@ class Voter(models.Model):
 
 
 class AdminStaff(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Link to User model
     name = models.CharField(max_length=255)
     dob = models.DateField()
     email = models.EmailField(unique=True)
@@ -137,6 +138,13 @@ class AdminStaff(models.Model):
     address = models.TextField()
     profile_image = models.ImageField(upload_to='profile_images/')
     access_control = models.JSONField(default=list)  # Stores selected checkboxes as JSON
+
+    # Permissions as boolean fields
+    can_access_elections = models.BooleanField(default=False)
+    can_access_candidates = models.BooleanField(default=False)
+    can_access_voters = models.BooleanField(default=False)
+    can_access_users = models.BooleanField(default=False)
+    can_access_reports = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
