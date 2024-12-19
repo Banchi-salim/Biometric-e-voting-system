@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+
+from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -130,7 +132,7 @@ class Voter(models.Model):
 
 
 class AdminStaff(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Link to User model
+    user = models.OneToOneField(User, on_delete=models.CASCADE, default=1)
     name = models.CharField(max_length=255)
     dob = models.DateField()
     email = models.EmailField(unique=True)
