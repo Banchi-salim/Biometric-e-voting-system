@@ -166,14 +166,8 @@ def add_admin_staff(request):
             phone=phone,
             address=address,
             profile_image=profile_image,
+            access_control=access_control,
         )
-
-        # Assign permissions based on access control
-        staff_profile.can_access_elections = 'elections' in access_control
-        staff_profile.can_access_candidates = 'candidates' in access_control
-        staff_profile.can_access_voters = 'voters' in access_control
-        staff_profile.can_access_users = 'user' in access_control
-        staff_profile.can_access_reports = 'reports' in access_control
 
         staff_profile.save()
 

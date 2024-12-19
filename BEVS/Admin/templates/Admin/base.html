@@ -14,19 +14,37 @@
     <img src="{% static 'Admin/css/images/logo.jpg' %}" alt="Logo" class="logo">
     <ul>
         <li><a href="{% url 'admin:admin_dashboard' %}">Home</a></li>
+
+        {% if 'elections' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:register_election' %}">Elections</a></li>
+        {% endif %}
+
+        {% if 'candidates' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:register_candidates' %}">Candidates</a></li>
+        {% endif %}
+
+        {% if 'voters' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:register_voters' %}">Register Voters</a></li>
+        {% endif %}
+
+        {% if 'user' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:add_admin_staff' %}">Admin/Staff</a></li>
+        {% endif %}
+
+        {% if 'reports' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:election_reports' %}">Election Reports</a></li>
+        {% endif %}
+
         <li><a href="{% url 'admin:logout' %}">Logout</a></li>
     </ul>
 </div>
+
 <!-- Main content -->
 <div class="main-content">
     {% block content %}
     <!-- Child templates will override this block -->
     {% endblock %}
 </div>
+
 </body>
 </html>

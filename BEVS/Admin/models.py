@@ -141,12 +141,6 @@ class AdminStaff(models.Model):
     profile_image = models.ImageField(upload_to='profile_images/')
     access_control = models.JSONField(default=list)  # Stores selected checkboxes as JSON
 
-    # Permissions as boolean fields
-    can_access_elections = models.BooleanField(default=False)
-    can_access_candidates = models.BooleanField(default=False)
-    can_access_voters = models.BooleanField(default=False)
-    can_access_users = models.BooleanField(default=False)
-    can_access_reports = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
