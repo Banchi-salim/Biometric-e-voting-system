@@ -15,6 +15,15 @@
     <ul>
         <li><a href="{% url 'admin:admin_dashboard' %}">Home</a></li>
 
+        {% if request.user.is_superuser %}
+        <!-- If the user is a superuser, show all menu items -->
+        <li><a href="{% url 'admin:register_election' %}">Elections</a></li>
+        <li><a href="{% url 'admin:register_candidates' %}">Candidates</a></li>
+        <li><a href="{% url 'admin:register_voters' %}">Register Voters</a></li>
+        <li><a href="{% url 'admin:add_admin_staff' %}">Admin/Staff</a></li>
+        <li><a href="{% url 'admin:election_reports' %}">Election Reports</a></li>
+        {% else %}
+        <!-- For non-superusers, show the menu items based on access_control -->
         {% if 'elections' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:register_election' %}">Elections</a></li>
         {% endif %}
@@ -33,6 +42,7 @@
 
         {% if 'reports' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:election_reports' %}">Election Reports</a></li>
+        {% endif %}
         {% endif %}
 
         <li><a href="{% url 'admin:logout' %}">Logout</a></li>
