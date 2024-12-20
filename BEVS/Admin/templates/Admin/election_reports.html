@@ -3,11 +3,11 @@
 {% block title %}Election Reports{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'Admin/css/election_reports.css' %}">{% endblock %}
 {% block content %}
-<div class="reports-container">
+<div class="reports-container" style="width: 60%;">
     <h1>Election Reports</h1>
     <div class="report-list">
         {% for report in reports %}
-        <div class="report-card">
+        <div class="report-card" style="width: 900px; margin: 10px auto;">
             <h2>{{ report.election.name }}</h2>
             <p>Election Date: {{ report.election.start_date }} to {{ report.election.end_date }}</p>
             <p>Total Voters: {{ report.total_voters }}</p>
@@ -18,7 +18,7 @@
                 <li>{{ candidate.name }} - {{ candidate.votes }} votes</li>
                 {% endfor %}
             </ul>
-            <a href="{% url 'download_report' report.id %}" class="download-btn">Download Report</a>
+            <a href="{% url 'admin:download_report' report.id %}" class="download-btn">Download Report</a>
         </div>
         {% endfor %}
     </div>

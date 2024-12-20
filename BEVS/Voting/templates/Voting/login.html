@@ -1,30 +1,253 @@
-{% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voter Login</title>
-    <link rel="stylesheet" href="{% static 'Voting/css/login.css' %}">
+    <title>Voter Fingerprint Login</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            background: white;
+            text-align: center;
+        }
+        
+        .login-header {
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            max-width: 120px;
+            margin-bottom: 20px;
+        }
+        
+        .fingerprint-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: none;
+            background: #007bff;
+            cursor: pointer;
+            padding: 20px;
+            transition: all 0.3s;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fingerprint-button:hover {
+            transform: scale(1.05);
+            background: #0056b3;
+        }
+        
+        .fingerprint-button img {
+            width: 80%;
+            height: 80%;
+            filter: invert(1);
+        }
+        
+        .fingerprint-icon {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .status-message {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .scanning {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .form-group {
+    margin: 20px 0;
+}
+
+#imagediv {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#imagediv img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.scanning-animation {
+    animation: fadeInOut 2s infinite;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+    </style>
 </head>
 <body>
 <div class="login-container">
     <div class="login-header">
-        <img src="{% static 'Voting/css/images/logo.jpg' %}" alt="Logo" class="logo">
+        <img src="/api/placeholder/120/120" alt="Logo" class="logo">
+        <h2>Voter Login</h2>
     </div>
-    <div class="login-content">
-        <h2>Scan fingerprint to login</h2>
-        <div class="fingerprint-container">
-            <a href="{% url 'voting_page' %}">
-                <button id="scanFingerprint" onclick="scanFingerprint()">
-                    <img src="{% static 'Voting/css/images/fingerprint.jpg' %}" alt="Fingerprint Icon">
-                </button>
-            </a>
-        </div>
+
+    <p>Place your finger on the scanner to login</p>
+
+    <div class="form-group">
+        <div id="imagediv"></div>
+        <input type="hidden" name="fingerprint_data" id="fingerprint_data">
     </div>
+
+    <div id="statusMessage" class="status-message"></div>
 </div>
 
-<script src="{% static 'Voting/js/login.js' %}"></script>
+{% csrf_token %}
+
+<script>
+    let test;
+    let isScanning = false;
+
+    // Initialize fingerprint scanner
+    window.onload = function() {
+        test = new FingerprintSdkTest();
+        initializeScanner();
+    }
+
+    function FingerprintSdkTest() {
+        var _instance = this;
+        this.sdk = new Fingerprint.WebApi;
+
+        this.sdk.onDeviceConnected = function(e) {
+            showStatus("Scanner ready. Place your finger.", "success");
+        };
+
+        this.sdk.onDeviceDisconnected = function(e) {
+            showStatus("Scanner disconnected. Please connect a scanner.", "error");
+        };
+
+        this.sdk.onCommunicationFailed = function(e) {
+            showStatus("Communication failed. Please try again.", "error");
+        };
+
+        this.sdk.onSamplesAcquired = function(s) {
+            var samples = JSON.parse(s.samples);
+            var base64Image = "data:image/png;base64," + Fingerprint.b64UrlTo64(samples[0]);
+            verifyFingerprint(base64Image);
+        };
+
+        this.sdk.onQualityReported = function(e) {
+            if (e.quality < 60) {
+                showStatus("Poor scan quality. Please try again.", "error");
+            }
+        }
+    }
+
+    function initializeScanner() {
+        test.sdk.startAcquisition(Fingerprint.SampleFormat.PngImage).then(function() {
+            showStatus("Scanner ready. Place your finger.", "success");
+        }, function(error) {
+            showStatus(error.message, "error");
+        });
+    }
+
+    function verifyFingerprint(fingerprintData) {
+    // Display the fingerprint image
+    var vDiv = document.getElementById('imagediv');
+    vDiv.innerHTML = "";
+    var image = document.createElement("img");
+    image.src = fingerprintData;
+    image.classList.add('scanning-animation');
+    vDiv.appendChild(image);
+
+    // Store the fingerprint data
+    document.getElementById('fingerprint_data').value = fingerprintData;
+
+    $.ajax({
+        url: '/verify-fingerprint/',
+        type: 'POST',
+        data: {
+            'fingerprint_image': fingerprintData,
+            'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.status === 'success') {
+                image.classList.remove('scanning-animation');
+                showStatus("Login successful! Redirecting...", "success");
+                setTimeout(function() {
+                    window.location.href = response.redirect_url;
+                }, 1000);
+            } else {
+                image.classList.remove('scanning-animation');
+                showStatus("Fingerprint not recognized. Please try again.", "error");
+                // Clear the image after a delay
+                setTimeout(function() {
+                    vDiv.innerHTML = "";
+                }, 2000);
+            }
+        },
+        error: function(xhr, status, error) {
+            image.classList.remove('scanning-animation');
+            showStatus("Error verifying fingerprint. Please try again.", "error");
+            // Clear the image after a delay
+            setTimeout(function() {
+                vDiv.innerHTML = "";
+            }, 2000);
+        }
+    });
+}
+    function showStatus(message, type) {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.textContent = message;
+        statusDiv.className = 'status-message ' + type;
+        statusDiv.style.display = 'block';
+
+        if (type === 'error') {
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+    }
+
+</script>
 </body>
 </html>

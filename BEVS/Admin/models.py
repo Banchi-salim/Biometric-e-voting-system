@@ -19,6 +19,7 @@ class Election(models.Model):
     def save(self, *args, **kwargs):
         # Save the Election first
         super().save(*args, **kwargs)
+        ElectionReport.objects.create(election=self)
 
         # Check if an Ongoing_Election already exists for this Election
         existing_ongoing = Ongoing_Election.objects.filter(election=self).first()
@@ -117,19 +118,19 @@ class Ongoing_Election(models.Model):
 
         super().save(*args, **kwargs)
 
-
+"""
 class Voter(models.Model):
     name = models.CharField(max_length=255)
     dob = models.DateField()
     address = models.TextField()
-    email  = models.EmailField(null=True)
+    email = models.EmailField(null=True)
     profile_image = models.ImageField(upload_to='voter_images/', null=True, blank=True)
     fingerprint = models.BinaryField(null=True, blank=True)  # Store raw fingerprint data
     elections = models.ManyToManyField('Election', related_name="voters")  # Many-to-Many Relationship
 
     def __str__(self):
         return self.name
-
+"""
 
 class AdminStaff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, default=1)
@@ -140,7 +141,6 @@ class AdminStaff(models.Model):
     address = models.TextField()
     profile_image = models.ImageField(upload_to='profile_images/')
     access_control = models.JSONField(default=list)  # Stores selected checkboxes as JSON
-
 
     def __str__(self):
         return self.name
@@ -168,3 +168,82 @@ class ElectionReport(models.Model):
         self.total_votes_cast = self.calculate_total_votes_cast()
         self.total_voters = self.calculate_total_voters()
         super(ElectionReport, self).save(*args, **kwargs)
+
+
+from django.db import models
+from django.contrib.auth.models import User
+import cv2
+import numpy as np
+from sklearn.metrics import mean_squared_error
+import base64
+import io
+
+
+class Voter(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    dob = models.DateField()
+    address = models.TextField()
+    email = models.EmailField(null=True)
+    profile_image = models.ImageField(upload_to='voter_images/', null=True, blank=True)
+    fingerprint_image = models.ImageField(
+        upload_to='fingerprints/',
+        null=True,
+        blank=True
+    )
+    fingerprint_template = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Processed fingerprint template data"
+    )
+    elections = models.ManyToManyField('Election', related_name="voters")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def verify_fingerprint(self, fingerprint_base64):
+        try:
+            # Remove the data URL prefix if present
+            if ',' in fingerprint_base64:
+                fingerprint_base64 = fingerprint_base64.split(',')[1]
+
+            # Decode base64 to image
+            current_image_data = base64.b64decode(fingerprint_base64)
+            current_image = cv2.imdecode(
+                np.frombuffer(current_image_data, np.uint8),
+                cv2.IMREAD_GRAYSCALE
+            )
+
+            # Get stored fingerprint
+            if not self.fingerprint_image:
+                return False, "No stored fingerprint found"
+
+            stored_image = cv2.imread(self.fingerprint_image.path, cv2.IMREAD_GRAYSCALE)
+
+            if stored_image is None:
+                return False, "Could not read stored fingerprint"
+
+            # Resize current image to match stored image dimensions
+            current_image_resized = cv2.resize(
+                current_image,
+                (stored_image.shape[1], stored_image.shape[0])
+            )
+
+            # Calculate similarity
+            mse = mean_squared_error(
+                stored_image.flatten(),
+                current_image_resized.flatten()
+            )
+
+            # Threshold for fingerprint match (adjust as needed)
+            if mse < 500:  # Lower threshold means stricter matching
+                return True, "Fingerprint verified successfully"
+
+            return False, "Fingerprint verification failed"
+
+        except Exception as e:
+            return False, str(e)
+
+    def __str__(self):
+        return self.name
+
+# The UserProfile model can be removed since its functionality is now in the Voter model

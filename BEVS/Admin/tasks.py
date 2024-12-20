@@ -1,41 +1,89 @@
+import logging
+from datetime import timedelta
 from celery import shared_task
 from django.utils import timezone
 from django.apps import apps
+import pytz
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 @shared_task
 def manage_election_status():
+    """
+    Celery task to manage election status based on start and end times.
+    Updates the is_active flag for ongoing elections.
+    """
     Election = apps.get_model('Admin', 'Election')
-    OngoingElection = apps.get_model('Admin', 'OngoingElection')
+    Ongoing_Election = apps.get_model('Admin', 'Ongoing_Election')
 
-    current_time = timezone.now()
+    # Set timezone to Africa/Lagos (Nigerian timezone)
+    local_tz = pytz.timezone('Africa/Lagos')  # Nigeria's timezone
 
-    # Loop through all elections to manage their status
-    for election in Election.objects.all():
-        start_datetime = timezone.make_aware(
-            timezone.datetime.combine(election.start_date, election.start_time)
-        )
-        end_datetime = timezone.make_aware(
-            timezone.datetime.combine(election.end_date, election.end_time)
-        )
+    try:
+        ongoing_elections = Ongoing_Election.objects.all()
+        logger.info(f"Processing {ongoing_elections.count()} ongoing elections")
 
-        try:
-            # Get or create the OngoingElection record for the election
-            ongoing_election, created = OngoingElection.objects.get_or_create(election=election)
+        for election in ongoing_elections:
+            try:
+                main = Election.objects.get(id=election.election_id)
 
-            # Check election time to determine status
-            if start_datetime <= current_time <= end_datetime:
-                # Activate the election if it falls within the current time
-                ongoing_election.is_active = True
-            elif current_time > end_datetime:
-                # Deactivate if the current time has passed the end time
-                ongoing_election.is_active = False
-            else:
-                # Deactivate if the election hasn't started yet
-                ongoing_election.is_active = False
+                # Get current time and convert to local timezone
+                current_time = timezone.now().astimezone(local_tz) + timedelta(hours=1)
 
-            # Save changes to the OngoingElection instance
-            ongoing_election.save()
+                # Make start and end times timezone-aware in local timezone
+                start_datetime = timezone.make_aware(
+                    timezone.datetime.combine(main.start_date, main.start_time),
+                    timezone=local_tz
+                )
+                end_datetime = timezone.make_aware(
+                    timezone.datetime.combine(main.end_date, main.end_time),
+                    timezone=local_tz
+                )
 
-        except Exception as e:
-            print(f"Error managing election status for {election.name}: {e}")
+                # Store previous state for comparison
+                previous_state = election.is_active
+
+                # Log time details for debugging
+                logger.debug(f"""
+                    Election: {main.name}
+                    Current Time: {current_time}
+                    Start Time: {start_datetime}
+                    End Time: {end_datetime}
+                """)
+
+                # Update status based on time comparison
+                if start_datetime <= current_time <= end_datetime:
+                    election.is_active = True
+                    election.save()
+                    status_msg = "activated"
+                else:
+                    election.is_active = False
+                    election.save()
+                    status_msg = "deactivated (past end time)" if current_time > end_datetime else "deactivated (before start time)"
+
+                # Only save and log if there's a state change
+                if previous_state != election.is_active:
+                    election.save()
+                    logger.warning(f"Election '{main.name}' status changed to {status_msg}")
+                    logger.info(f"""
+                        Status Change Details:
+                        - Election: {main.name}
+                        - Previous State: {previous_state}
+                        - New State: {election.is_active}
+                        - Current Time: {current_time}
+                        - Start Time: {start_datetime}
+                        - End Time: {end_datetime}
+                    """)
+
+            except Election.DoesNotExist:
+                logger.error(f"Election with ID {election.election_id} not found")
+            except Exception as e:
+                logger.error(f"Error processing election {election.election_id}: {str(e)}", exc_info=True)
+
+        return "Election status update completed successfully"
+
+    except Exception as e:
+        logger.error(f"Fatal error in manage_election_status task: {str(e)}", exc_info=True)
+        raise

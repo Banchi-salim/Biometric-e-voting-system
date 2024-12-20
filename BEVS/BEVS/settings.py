@@ -137,7 +137,32 @@ from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     'manage-election-status-every-minute': {
-        'task': 'your_app.tasks.manage_election_status',
+        'task': 'Admin.tasks.manage_election_status',
         'schedule': crontab(minute='*/1'),  # Run every minute
     },
 }
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'Admin.tasks': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
