@@ -180,7 +180,6 @@ import io
 
 
 class Voter(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     dob = models.DateField()
     address = models.TextField()
@@ -246,4 +245,3 @@ class Voter(models.Model):
     def __str__(self):
         return self.name
 
-# The UserProfile model can be removed since its functionality is now in the Voter model

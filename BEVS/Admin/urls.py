@@ -12,5 +12,6 @@ urlpatterns = [
     path('add-admin-staff/', views.add_admin_staff, name='add_admin_staff'),
     path('election-reports/', views.election_reports, name='election_reports'),
     path('download-report/<int:report_id>/', views.download_report, name='download_report'),
+    path('capture-print/', views.capture_print, name='capture_print'),
     path('logout/', views.logout_view, name='logout'),
 ]

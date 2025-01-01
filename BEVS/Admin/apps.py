@@ -13,6 +13,3 @@ class AdminConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'Admin'
 
-    def ready(self):
-        from .setup_tasks import setup_periodic_task
-        setup_periodic_task()

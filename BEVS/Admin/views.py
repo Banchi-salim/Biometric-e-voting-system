@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -100,11 +101,10 @@ def register_voter(request):
         email = request.POST.get('email')
         address = request.POST.get('address')
         profile_image = request.FILES.get('profile_image')
-        fingerprint_data = request.POST.get('fingerprint_data')  # Fingerprint data (image/template)
 
         # Decode fingerprint data if required
-        if fingerprint_data:
-            fingerprint_data = ""  # Example placeholder: base64.b64decode(fingerprint_data)
+        """if fingerprint_data:
+            fingerprint_data = ""  # Example placeholder: base64.b64decode(fingerprint_data)"""
 
         try:
             # Save the voter data along with the fingerprint data
@@ -114,7 +114,6 @@ def register_voter(request):
                 address=address,
                 email=email,
                 profile_image=profile_image,
-                fingerprint=fingerprint_data
             )
             voter.save()  # Save voter instance to the database
 
@@ -139,7 +138,50 @@ def register_voter(request):
             print(f"Error during voter registration: {e}")
             messages.error(request, "An error occurred during registration. Please try again.")
 
-    return render(request, 'admin/reg_voters.html')
+    return render(request, 'admin/reg_voters1.html')
+
+
+def capture_print(request):
+    voters = Voter.objects.filter(
+        Q(fingerprint_image__isnull=True) | Q(fingerprint_image=''),
+        Q(fingerprint_template__isnull=True) | Q(fingerprint_template='')
+    )  # Fetch all voters
+
+    if request.method == 'POST':
+        voter_id = request.POST.get('voter_id')  # Get selected voter ID
+        fingerprint_data = request.POST.get('fingerprint_data')  # Get fingerprint data as base64 string
+
+        if not voter_id or not fingerprint_data:
+            return JsonResponse({'success': False, 'message': 'Invalid voter ID or fingerprint data'})
+
+        # Find the voter by ID
+        voter = get_object_or_404(Voter, id=voter_id)
+
+        try:
+            # Decode fingerprint base64 data to image
+            if ',' in fingerprint_data:
+                fingerprint_data = fingerprint_data.split(',')[1]  # Remove the data URL prefix if present
+
+            fingerprint_image_data = base64.b64decode(fingerprint_data)
+            fingerprint_image = cv2.imdecode(
+                np.frombuffer(fingerprint_image_data, np.uint8),
+                cv2.IMREAD_GRAYSCALE
+            )
+
+            # Save the fingerprint image as a file
+            fingerprint_image_path = f"fingerprints/voter_{voter.id}_fingerprint.jpg"
+            cv2.imwrite(fingerprint_image_path, fingerprint_image)
+
+            # Update the voter's fingerprint image field
+            voter.fingerprint_image.name = fingerprint_image_path
+            voter.save()
+
+            return JsonResponse({'success': True, 'message': 'Fingerprint captured and saved successfully'})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+    return render(request, 'Admin/scanner.html', {'voters': voters})
 
 
 def add_admin_staff(request):
@@ -174,7 +216,6 @@ def add_admin_staff(request):
         return redirect('admin:staff_list')  # Redirect to the staff list page.
 
     return render(request, 'Admin/add_admin_staff.html')
-
 
 
 def election_reports(request):
@@ -212,4 +253,3 @@ def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('admin:admin_login')
-

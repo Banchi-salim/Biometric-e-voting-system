@@ -20,6 +20,7 @@
         <li><a href="{% url 'admin:register_election' %}">Elections</a></li>
         <li><a href="{% url 'admin:register_candidates' %}">Candidates</a></li>
         <li><a href="{% url 'admin:register_voters' %}">Register Voters</a></li>
+        <li><a href="{% url 'admin:capture_print' %}">Capture Biometrics</a></li>
         <li><a href="{% url 'admin:add_admin_staff' %}">Admin/Staff</a></li>
         <li><a href="{% url 'admin:election_reports' %}">Election Reports</a></li>
         {% else %}
@@ -34,6 +35,10 @@
 
         {% if 'voters' in request.user.adminstaff.access_control %}
         <li><a href="{% url 'admin:register_voters' %}">Register Voters</a></li>
+        {% endif %}
+
+        {% if 'voters' in request.user.adminstaff.access_control %}
+        <li><a href="{% url 'admin:capture_print' %}">Capture Biometrics</a></li>
         {% endif %}
 
         {% if 'user' in request.user.adminstaff.access_control %}

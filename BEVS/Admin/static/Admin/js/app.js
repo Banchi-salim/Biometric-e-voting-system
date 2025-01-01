@@ -125,8 +125,7 @@ window.onload = function () {
 function onStart() {
     assignFormat();
     if(currentFormat == ""){
-        currentFormat = Fingerprint.SampleFormat.PngImage;
-        //alert("Please select a format.")
+        alert("Please select a format.")
     }else{        
         test.startCapture();
     }
@@ -199,25 +198,50 @@ function toggle_visibility(ids) {
 }
 
 
-$("#save").on("click",function(){
-    if(localStorage.getItem("imageSrc") == "" || localStorage.getItem("imageSrc") == null || document.getElementById('imagediv').innerHTML == ""){
+$("#save").on("click", function () {
+    if (
+        localStorage.getItem("imageSrc") == "" ||
+        localStorage.getItem("imageSrc") == null ||
+        document.getElementById("imagediv").innerHTML == ""
+    ) {
         alert("Error -> Fingerprint not available");
-    }else{
-        var vDiv = document.getElementById('imageGallery');
-        if(vDiv.children.length < 5){
-            var image = document.createElement("img");
-            image.id = "galleryImage";
-            image.className = "img-thumbnail";
-            image.src = localStorage.getItem("imageSrc");
-            vDiv.appendChild(image);
-
-            localStorage.setItem("imageSrc"+vDiv.children.length,localStorage.getItem("imageSrc"));
-        }else{
-            document.getElementById('imageGallery').innerHTML = "";
-            $("#save").click();
+    } else {
+        const voterId = $("#voter").val(); // Get selected voter ID
+        if (!voterId) {
+            alert("Please select a voter.");
+            return;
         }
+
+        const fingerprintData = localStorage.getItem("imageSrc"); // Get fingerprint data
+
+        // Send fingerprint and voter ID to Django view
+        $.ajax({
+            url: "/capture-print/", // Update to match your Django URL
+            type: "POST",
+            headers: {
+                "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(), // Include CSRF token
+            },
+            data: {
+                voter_id: voterId,
+                fingerprint_data: fingerprintData,
+            },
+            success: function (response) {
+                if (response.success) {
+                    alert("Fingerprint saved successfully!");
+                    // Optionally, clear the imagediv
+                    document.getElementById("imagediv").innerHTML = "";
+                    localStorage.removeItem("imageSrc");
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("An error occurred: " + error);
+            },
+        });
     }
 });
+
 
 function populateReaders(readersArray) {
         var _deviceInfoTable = document.getElementById("deviceInfo");
@@ -265,7 +289,7 @@ function sampleAcquired(s){
                 var decodedData = JSON.parse(Fingerprint.b64UrlToUtf8(sampleData));
                 localStorage.setItem("raw", Fingerprint.b64UrlTo64(decodedData.Data));
 
-                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">RAW Sample Acquired <br>'+Date()+'</div>';
+                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:none">RAW Sample Acquired <br>'+Date()+'</div>';
                 setTimeout('delayAnimate("animateText","table-cell")',100); 
 
                 disableEnableExport(false);
@@ -282,7 +306,7 @@ function sampleAcquired(s){
                 var decodedData = JSON.parse(Fingerprint.b64UrlToUtf8(sampleData));
                 localStorage.setItem("wsq","data:application/octet-stream;base64," + Fingerprint.b64UrlTo64(decodedData.Data));
 
-                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">WSQ Sample Acquired <br>'+Date()+'</div>';
+                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:none">WSQ Sample Acquired <br>'+Date()+'</div>';
                 setTimeout('delayAnimate("animateText","table-cell")',100);   
 
                 disableEnableExport(false);
@@ -297,7 +321,7 @@ function sampleAcquired(s){
                 var sampleData = Fingerprint.b64UrlTo64(samples[0].Data);
                 localStorage.setItem("intermediate", sampleData);
 
-                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">Intermediate Sample Acquired <br>'+Date()+'</div>';
+                var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:none">Intermediate Sample Acquired <br>'+Date()+'</div>';
                 setTimeout('delayAnimate("animateText","table-cell")',100); 
 
                 disableEnableExport(false);
@@ -608,62 +632,4 @@ function delayAnimate(id,visibility)
    document.getElementById(id).style.display = visibility;
 }
 
-
-// Add this function to handle reader population on page load
-function populateReaders() {
-    var allReaders = test.getInfo();
-    allReaders.then(function (sucessObj) {
-        var readersDropDown = document.getElementById("readersDropDown");
-        readersDropDown.innerHTML = "<option value=''>Select Reader</option>";
-
-        sucessObj.forEach(function(reader) {
-            var option = document.createElement("option");
-            option.value = reader;
-            option.text = 'Digital Persona (' + reader + ')';
-            readersDropDown.add(option);
-        });
-
-        if (sucessObj.length === 1) {
-            readersDropDown.selectedIndex = 1;
-            selectChangeEvent();
-        }
-    }, function (error){
-        console.error("Error populating readers:", error.message);
-    });
-}
-
-// Modify the window.onload to call populateReaders
-window.onload = function () {
-    localStorage.clear();
-    test = new FingerprintSdkTest();
-    populateReaders();
-    disableEnable();
-    enableDisableScanQualityDiv("content-reader");
-    disableEnableExport(true);
-
-    // Initially disable start/stop buttons
-    $('#start').prop('disabled', true);
-    $('#stop').prop('disabled', true);
-};
-
-// Modify selectChangeEvent to handle reader selection
-function selectChangeEvent(){
-    var readersDropDownElement = document.getElementById("readersDropDown");
-    myVal = readersDropDownElement.options[readersDropDownElement.selectedIndex].value;
-
-    if(myVal === ""){
-        // No reader selected
-        $('#start').prop('disabled', true);
-        $('#stop').prop('disabled', true);
-        showMessage("Please select a reader");
-    } else {
-        // Reader selected
-        $('#start').prop('disabled', false);
-        $('#stop').prop('disabled', true);
-        showMessage("Reader selected. Ready to capture.");
-    }
-
-    onClear();
-    document.getElementById('imageGallery').innerHTML = "";
-}
 // For Download and formats ends
