@@ -3,6 +3,7 @@
 {% block title %}Voter Registration{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'Admin/css/reg_voters.css'%}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     .registration-form-container {
         display: flex;
@@ -138,6 +139,48 @@
     </div>
 </div>
 <script>
+document.getElementById('registrationForm').addEventListener('submit', function (e) {
+    e.preventDefault(); // Prevent form submission
+
+    const formData = new FormData(this);
+
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // SweetAlert for success message
+                Swal.fire({
+                    title: 'Registration Successful!',
+                    text: data.message, // Display the message with registration number
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.reload(); // Reload page or redirect if needed
+                });
+            } else {
+                // SweetAlert for error message
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonText: 'Try Again'
+                });
+            }
+        })
+        .catch(error => {
+            // SweetAlert for unexpected errors
+            Swal.fire({
+                title: 'Oops...',
+                text: 'An error occurred. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            console.error(error);
+        });
+});
 
 </script>
 {% endblock %}

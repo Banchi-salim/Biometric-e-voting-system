@@ -109,7 +109,7 @@ def create_reg_number():
         str: A unique registration number.
     """
 
-    existing_numbers = set(Voter.objects.values_list('registration_number', flat=True))
+    existing_numbers = set(Voter.objects.values_list('voter_reg_number', flat=True))
     while True:
         # Generate a 9-character string of random letters and digits
         reg_number = ''.join(random.choices(string.ascii_uppercase + string.digits, k=9))
@@ -131,12 +131,8 @@ def register_voter(request):
         profile_image = request.FILES.get('profile_image')
         reg_number = create_reg_number()
 
-        # Decode fingerprint data if required
-        """if fingerprint_data:
-            fingerprint_data = ""  # Example placeholder: base64.b64decode(fingerprint_data)"""
-
         try:
-            # Save the voter data along with the fingerprint data
+            # Save the voter data
             voter = Voter(
                 name=name,
                 dob=dob,
@@ -147,9 +143,9 @@ def register_voter(request):
             )
             voter.save()  # Save voter instance to the database
 
-            # Send mail after saving the voter
+            # Send email notification to the voter
             send_mail(
-                subject=f"Successful Registration On BEVS",
+                subject="Successful Registration On BEVS",
                 message=f"Hi {name},\n\n"
                         f"You have successfully been registered on BEVS:\n\n"
                         f"Name: {name}\n"
@@ -157,17 +153,27 @@ def register_voter(request):
                         f"Address: {address}\n\n"
                         f"REGISTRATION NUMBER: {reg_number}\n\n"
                         f"You will be updated regularly.",
-                from_email='no-reply@ncdc.gov.ng',
+                from_email='no-reply@BEVS.COM.NG',
                 recipient_list=[email],
                 fail_silently=True
             )
 
-            messages.success(request, "Voter registration successful!")
-            return redirect('register_voter')  # Redirect back to the registration page
+            # Add a success message with the registration number
+            messages.success(request, f"Voter registration successful! Your registration number is {reg_number}.")
+
+            # Send registration number in an alert (frontend implementation)
+            return JsonResponse({
+                'status': 'success',
+                'message': f"Voter registered successfully! Registration number: {reg_number}"
+            })
 
         except Exception as e:
             print(f"Error during voter registration: {e}")
             messages.error(request, "An error occurred during registration. Please try again.")
+            return JsonResponse({
+                'status': 'error',
+                'message': "An error occurred during registration. Please try again."
+            })
 
     return render(request, 'admin/reg_voters1.html')
 
