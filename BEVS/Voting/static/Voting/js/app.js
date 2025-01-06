@@ -40,11 +40,11 @@ var FingerprintSdkTest = (function () {
         };
         this.sdk.onDeviceDisconnected = function (e) {
             // Detects if device gets disconnected - provides deviceUid of disconnected device
-            showMessage("Device disconnected");
+            Message("Device disconnected");
         };
         this.sdk.onCommunicationFailed = function (e) {
             // Detects if there is a failure in communicating with U.R.U web SDK
-            showMessage("Communinication Failed")
+            Message("Communinication Failed")
         };
         this.sdk.onSamplesAcquired = function (s) {
             // Sample acquired event triggers this function
@@ -70,7 +70,7 @@ var FingerprintSdkTest = (function () {
             disableEnableStartStop();
 
         }, function (error) {
-            showMessage(error.message);
+            Message(error.message);
         });
     };
     FingerprintSdkTest.prototype.stopCapture = function () {
@@ -85,7 +85,7 @@ var FingerprintSdkTest = (function () {
             disableEnableStartStop();
 
         }, function (error) {
-            showMessage(error.message);
+            Message(error.message);
         });
     };
 
@@ -99,18 +99,25 @@ var FingerprintSdkTest = (function () {
         return  this.sdk.getDeviceInfo(uid);
     };
 
-    
+
     return FingerprintSdkTest;
 })();
 
-function showMessage(message){
-    var _instance = this;
-    //var statusWindow = document.getElementById("status");
-    x = state.querySelectorAll("#status");
-    if(x.length != 0){
-        x[0].innerHTML = message;
+function showMessage(message) {
+    var statusWindow = document.getElementById("status");
+
+    if (!statusWindow) {
+        console.error("Element with ID 'status' not found in the DOM.");
+        return;
     }
+
+    // Update the content of the status element
+    statusWindow.innerHTML = message;
+
+    // Optionally, make the status element visible
+    statusWindow.style.display = "block";
 }
+
 
 window.onload = function () {
     localStorage.clear();
@@ -126,8 +133,8 @@ function onStart() {
     assignFormat();
     if(currentFormat == ""){
         currentFormat = Fingerprint.SampleFormat.PngImage;
-        //alert("Please select a format.")
-    }else{        
+        alert("Please select a format.")
+    }else{
         test.startCapture();
     }
 }
@@ -137,11 +144,11 @@ function onStop() {
 }
 
 function onGetInfo() {
-    var allReaders = test.getInfo();    
+    var allReaders = test.getInfo();
     allReaders.then(function (sucessObj) {
         populateReaders(sucessObj);
     }, function (error){
-        showMessage(error.message);
+        //Message(error.message);
     });
 }
 function onDeviceInfo(id, element){
@@ -154,7 +161,7 @@ function onDeviceInfo(id, element){
             var deviceTech = deviceTechn[sucessObj.eDeviceTech];
             //Another method to get Device technology directly from SDK
             //Uncomment the below logging messages to see it working, Similarly for DeviceUidType and DeviceModality
-            //console.log(Fingerprint.DeviceTechnology[sucessObj.eDeviceTech]);            
+            //console.log(Fingerprint.DeviceTechnology[sucessObj.eDeviceTech]);
             //console.log(Fingerprint.DeviceModality[sucessObj.eDeviceModality]);
             //console.log(Fingerprint.DeviceUidType[sucessObj.eUidType]);
             var retutnVal = //"Device Info -"
@@ -166,7 +173,7 @@ function onDeviceInfo(id, element){
             document.getElementById(element).innerHTML = retutnVal;
 
         }, function (error){
-            showMessage(error.message);
+            Message(error.message);
         });
 
 }
@@ -185,7 +192,7 @@ function toggle_visibility(ids) {
     document.getElementById("qualityInputBox").value = "";
     onStop();
     enableDisableScanQualityDiv(ids[0]); // To enable disable scan quality div
-    for (var i=0;i<ids.length;i++) {        
+    for (var i=0;i<ids.length;i++) {
        var e = document.getElementById(ids[i]);
         if(i == 0){
             e.style.display = 'block';
@@ -199,23 +206,34 @@ function toggle_visibility(ids) {
 }
 
 
-$("#save").on("click",function(){
-    if(localStorage.getItem("imageSrc") == "" || localStorage.getItem("imageSrc") == null || document.getElementById('imagediv').innerHTML == ""){
-        alert("Error -> Fingerprint not available");
-    }else{
-        var vDiv = document.getElementById('imageGallery');
-        if(vDiv.children.length < 5){
-            var image = document.createElement("img");
-            image.id = "galleryImage";
-            image.className = "img-thumbnail";
-            image.src = localStorage.getItem("imageSrc");
-            vDiv.appendChild(image);
+$("#save").on("click", function () {
+    // Check if fingerprint data is available
+    const imageSrc = localStorage.getItem("imageSrc");
+    const imageDiv = document.getElementById("imagediv");
+    const regNum = document.getElementById('registration_number')
 
-            localStorage.setItem("imageSrc"+vDiv.children.length,localStorage.getItem("imageSrc"));
-        }else{
-            document.getElementById('imageGallery').innerHTML = "";
-            $("#save").click();
-        }
+    if (!imageSrc || imageDiv.innerHTML === "") {
+        alert("Error -> Fingerprint not available");
+        return;
+    }
+
+    // Display the fingerprint image
+    if (imageDiv.children.length < 5) {
+        const image = document.createElement("img");
+        image.id = "galleryImage";
+        image.className = "img-thumbnail";
+        image.src = imageSrc;
+        imageDiv.appendChild(image);
+
+        // Store the image in local storage
+        localStorage.setItem("imageSrc" + imageDiv.children.length, imageSrc);
+
+        // Save the fingerprint data in the hidden input for form submission
+        document.getElementById("fingerprint_data").value = imageSrc;
+    } else {
+        // Reset the fingerprint image gallery
+        imageDiv.innerHTML = "";
+        $("#save").click(); // Retry saving the fingerprint
     }
 });
 
@@ -224,8 +242,8 @@ function populateReaders(readersArray) {
         _deviceInfoTable.innerHTML = "";
         if(readersArray.length != 0){
             _deviceInfoTable.innerHTML += "<h4>Available Readers</h4>"
-            for (i=0;i<readersArray.length;i++){ 
-                _deviceInfoTable.innerHTML += 
+            for (i=0;i<readersArray.length;i++){
+                _deviceInfoTable.innerHTML +=
                 "<div id='dynamicInfoDivs' align='left'>"+
                     "<div data-toggle='collapse' data-target='#"+readersArray[i]+"'>"+
                         "<img src='images/info.png' alt='Info' height='20' width='20'> &nbsp; &nbsp;"+readersArray[i]+"</div>"+
@@ -235,27 +253,27 @@ function populateReaders(readersArray) {
         }
     };
 
-function sampleAcquired(s){   
-            if(currentFormat == Fingerprint.SampleFormat.PngImage){   
-            // If sample acquired format is PNG- perform following call on object recieved 
-            // Get samples from the object - get 0th element of samples as base 64 encoded PNG image         
-                localStorage.setItem("imageSrc", "");                
-                var samples = JSON.parse(s.samples);            
+function sampleAcquired(s){
+            if(currentFormat == Fingerprint.SampleFormat.PngImage){
+            // If sample acquired format is PNG- perform following call on object recieved
+            // Get samples from the object - get 0th element of samples as base 64 encoded PNG image
+                localStorage.setItem("imageSrc", "");
+                var samples = JSON.parse(s.samples);
                 localStorage.setItem("imageSrc", "data:image/png;base64," + Fingerprint.b64UrlTo64(samples[0]));
-                if(state == document.getElementById("content-capture")){ 
+                if(state == document.getElementById("content-capture")){
                     var vDiv = document.getElementById('imagediv');
                     vDiv.innerHTML = "";
                     var image = document.createElement("img");
                     image.id = "image";
                     image.src = localStorage.getItem("imageSrc");
-                    vDiv.appendChild(image); 
+                    vDiv.appendChild(image);
                 }
 
                 disableEnableExport(false);
             }
 
-            else if(currentFormat == Fingerprint.SampleFormat.Raw){  
-                // If sample acquired format is RAW- perform following call on object recieved 
+            else if(currentFormat == Fingerprint.SampleFormat.Raw){
+                // If sample acquired format is RAW- perform following call on object recieved
                 // Get samples from the object - get 0th element of samples and then get Data from it.
                 // Returned data is Base 64 encoded, which needs to get decoded to UTF8,
                 // after decoding get Data key from it, it returns Base64 encoded raw image data
@@ -266,13 +284,13 @@ function sampleAcquired(s){
                 localStorage.setItem("raw", Fingerprint.b64UrlTo64(decodedData.Data));
 
                 var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">RAW Sample Acquired <br>'+Date()+'</div>';
-                setTimeout('delayAnimate("animateText","table-cell")',100); 
+                setTimeout('delayAnimate("animateText","table-cell")',100);
 
                 disableEnableExport(false);
             }
 
-            else if(currentFormat == Fingerprint.SampleFormat.Compressed){  
-                // If sample acquired format is Compressed- perform following call on object recieved 
+            else if(currentFormat == Fingerprint.SampleFormat.Compressed){
+                // If sample acquired format is Compressed- perform following call on object recieved
                 // Get samples from the object - get 0th element of samples and then get Data from it.
                 // Returned data is Base 64 encoded, which needs to get decoded to UTF8,
                 // after decoding get Data key from it, it returns Base64 encoded wsq image
@@ -283,13 +301,13 @@ function sampleAcquired(s){
                 localStorage.setItem("wsq","data:application/octet-stream;base64," + Fingerprint.b64UrlTo64(decodedData.Data));
 
                 var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">WSQ Sample Acquired <br>'+Date()+'</div>';
-                setTimeout('delayAnimate("animateText","table-cell")',100);   
+                setTimeout('delayAnimate("animateText","table-cell")',100);
 
                 disableEnableExport(false);
             }
 
-            else if(currentFormat == Fingerprint.SampleFormat.Intermediate){  
-                // If sample acquired format is Intermediate- perform following call on object recieved 
+            else if(currentFormat == Fingerprint.SampleFormat.Intermediate){
+                // If sample acquired format is Intermediate- perform following call on object recieved
                 // Get samples from the object - get 0th element of samples and then get Data from it.
                 // It returns Base64 encoded feature set
                 localStorage.setItem("intermediate", "");
@@ -298,7 +316,7 @@ function sampleAcquired(s){
                 localStorage.setItem("intermediate", sampleData);
 
                 var vDiv = document.getElementById('imagediv').innerHTML = '<div id="animateText" style="display:block">Intermediate Sample Acquired <br>'+Date()+'</div>';
-                setTimeout('delayAnimate("animateText","table-cell")',100); 
+                setTimeout('delayAnimate("animateText","table-cell")',100);
 
                 disableEnableExport(false);
             }
@@ -306,13 +324,13 @@ function sampleAcquired(s){
             else{
                 alert("Format Error");
                 //disableEnableExport(true);
-            }    
+            }
 }
 
 function readersDropDownPopulate(checkForRedirecting){ // Check for redirecting is a boolean value which monitors to redirect to content tab or not
     myVal = "";
     var allReaders = test.getInfo();
-    allReaders.then(function (sucessObj) {        
+    allReaders.then(function (sucessObj) {
         var readersDropDownElement = document.getElementById("readersDropDown");
         readersDropDownElement.innerHTML ="";
         //First ELement
@@ -321,19 +339,19 @@ function readersDropDownPopulate(checkForRedirecting){ // Check for redirecting 
         option.value = "";
         option.text = "Select Reader";
         readersDropDownElement.add(option);
-        for (i=0;i<sucessObj.length;i++){ 
+        for (i=0;i<sucessObj.length;i++){
             var option = document.createElement("option");
             option.value = sucessObj[i];
             option.text = 'Digital Persona (' + sucessObj[i] + ')';
             readersDropDownElement.add(option);
         }
 
-    //Check if readers are available get count and  provide user information if no reader available, 
+    //Check if readers are available get count and  provide user information if no reader available,
     //if only one reader available then select the reader by default and sennd user to capture tab
     checkReaderCount(sucessObj,checkForRedirecting);
 
     }, function (error){
-        showMessage(error.message);
+        Message(error.message);
     });
 }
 
@@ -343,7 +361,7 @@ function checkReaderCount(sucessObj,checkForRedirecting){
    }else if(sucessObj.length == 1){
         document.getElementById("readersDropDown").selectedIndex = "1";
         if(checkForRedirecting){
-            toggle_visibility(['content-capture','content-reader']);    
+            toggle_visibility(['content-capture','content-reader']);
             enableDisableScanQualityDiv("content-capture"); // To enable disable scan quality div
             setActive('Capture','Reader'); // Set active state to capture
         }
@@ -384,19 +402,19 @@ function disableEnable(){
         disabled = false;
         $('#start').prop('disabled', false);
         $('#stop').prop('disabled', false);
-        showMessage("");
+        Message("");
         disableEnableStartStop();
     }else{
         disabled = true;
         $('#start').prop('disabled', true);
         $('#stop').prop('disabled', true);
-        showMessage("Please select a reader");
+        Message("Please select a reader");
         onStop();
     }
 }
 
 
-// Start-- Optional to make GUi user frindly 
+// Start-- Optional to make GUi user frindly
 //To make Start and stop buttons selection mutually exclusive
 $('body').click(function(){disableEnableStartStop();});
 
@@ -407,7 +425,7 @@ function disableEnableStartStop(){
             $('#stop').prop('disabled', false);
         }else{
             $('#start').prop('disabled', false);
-            $('#stop').prop('disabled', true); 
+            $('#stop').prop('disabled', true);
         }
     }
 }
@@ -415,13 +433,13 @@ function disableEnableStartStop(){
 // Stop-- Optional to make GUI user freindly
 
 
-function enableDisableScanQualityDiv(id){
-    if(id == "content-reader"){
-        document.getElementById('Scores').style.display = 'none';
-    }else{
-        document.getElementById('Scores').style.display = 'block';
-    }
-}
+//function enableDisableScanQualityDiv(id){
+    //if(id == "content-reader"){
+        //document.getElementById('Scores').style.display = 'none';
+    //}else{
+        //document.getElementById('Scores').style.display = 'block';
+    //}
+//}
 
 
 function setActive(element1,element2){
@@ -479,7 +497,7 @@ function onImageDownload(){
 
 
 function downloadURI(uri, name, dataURIType) {
-    if (IeVersionInfo() > 0){ 
+    if (IeVersionInfo() > 0){
     //alert("This is IE " + IeVersionInfo());
     var blob = dataURItoBlob(uri,dataURIType);
     window.navigator.msSaveOrOpenBlob(blob, name);
@@ -513,11 +531,11 @@ function IeVersionInfo() {
   var IEVersion = sAgent.indexOf("MSIE");
 
   // If IE, return version number.
-  if (IEVersion > 0) 
+  if (IEVersion > 0)
     return parseInt(sAgent.substring(IEVersion+ 5, sAgent.indexOf(".", IEVersion)));
 
   // If IE 11 then look for Updated user agent string.
-  else if (!!navigator.userAgent.match(/Trident\/7\./)) 
+  else if (!!navigator.userAgent.match(/Trident\/7\./))
     return 11;
 
   // Quick and dirty test for Microsoft Edge
@@ -530,7 +548,7 @@ function IeVersionInfo() {
 
 
 $(document).ready(function(){
-  $('[data-toggle="tooltip"]').tooltip();   
+  $('[data-toggle="tooltip"]').tooltip();
 });
 
 function checkOnly(stayChecked)
@@ -560,28 +578,37 @@ with(document.myForm)
       }
     }
   }
-}         
+}
 
-function assignFormat(){
-    currentFormat = "";
-    with(document.myForm){
-        for(i = 0; i < elements.length; i++){
-            if(elements[i].checked == true){
-                if(elements[i].name == "Raw"){
-                    currentFormat = Fingerprint.SampleFormat.Raw;
-                }
-                if(elements[i].name == "Intermediate"){
-                    currentFormat = Fingerprint.SampleFormat.Intermediate;
-                }
-                if(elements[i].name == "Compressed"){
-                    currentFormat = Fingerprint.SampleFormat.Compressed;
-                }
-                if(elements[i].name == "PngImage"){
-                    currentFormat = Fingerprint.SampleFormat.PngImage;
-                }
-            }
-        }
+function assignFormat() {
+    // Initialize the currentFormat variable
+    let currentFormat = "";
+
+    // Get the selected value from the dropdown
+    const selectElement = document.getElementById("fingerprint_format");
+    const selectedValue = selectElement.value;
+
+    // Assign the appropriate format based on the selected value
+    switch (selectedValue) {
+        case "Raw":
+            currentFormat = Fingerprint.SampleFormat.Raw;
+            break;
+        case "Intermediate":
+            currentFormat = Fingerprint.SampleFormat.Intermediate;
+            break;
+        case "Compressed":
+            currentFormat = Fingerprint.SampleFormat.Compressed;
+            break;
+        case "PngImage":
+            currentFormat = Fingerprint.SampleFormat.PngImage;
+            break;
+        default:
+            console.error("Invalid format selected");
+            break;
     }
+
+    // Debug: Output the selected format
+    console.log("Selected Format: ", currentFormat);
 }
 
 
@@ -589,7 +616,7 @@ function disableEnableExport(val){
     if(val){
         $('#saveImagePng').prop('disabled', true);
     }else{
-        $('#saveImagePng').prop('disabled', false); 
+        $('#saveImagePng').prop('disabled', false);
     }
 }
 
@@ -598,7 +625,7 @@ function disableEnableSaveThumbnails(val){
     if(val){
         $('#save').prop('disabled', true);
     }else{
-        $('#save').prop('disabled', false); 
+        $('#save').prop('disabled', false);
     }
 }
 
@@ -655,12 +682,12 @@ function selectChangeEvent(){
         // No reader selected
         $('#start').prop('disabled', true);
         $('#stop').prop('disabled', true);
-        showMessage("Please select a reader");
+        Message("Please select a reader");
     } else {
         // Reader selected
         $('#start').prop('disabled', false);
         $('#stop').prop('disabled', true);
-        showMessage("Reader selected. Ready to capture.");
+        Message("Reader selected. Ready to capture.");
     }
 
     onClear();

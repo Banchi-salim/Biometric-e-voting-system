@@ -7,4 +7,5 @@ urlpatterns = [
     path('voting/', views.voting_page, name='voting_page'),
     path('submit-votes/', views.submit_votes, name='submit_votes'),
     path('monitor-election/', views.election_monitoring, name='election_monitoring'),
+    path('validate-registration/', views.validate_registration, name='validate_registration'),
 ]

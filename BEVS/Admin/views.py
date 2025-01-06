@@ -1,4 +1,5 @@
 import csv
+import os
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -93,6 +94,33 @@ def add_candidate(request):
     return render(request, 'admin/reg_candidates.html', {'elections': elections})
 
 
+import random
+import string
+
+
+def create_reg_number():
+    """
+    Generate a unique 9-character registration number in the format XX-XX-XX-X.
+
+    Args:
+        existing_numbers (set): A set of existing registration numbers.
+
+    Returns:
+        str: A unique registration number.
+    """
+
+    existing_numbers = set(Voter.objects.values_list('registration_number', flat=True))
+    while True:
+        # Generate a 9-character string of random letters and digits
+        reg_number = ''.join(random.choices(string.ascii_uppercase + string.digits, k=9))
+        # Format with '-' after every 2 characters
+        formatted_reg_number = f"{reg_number[:3]}-{reg_number[3:6]}-{reg_number[6:]}"
+
+        # Ensure the registration number is unique
+        if formatted_reg_number not in existing_numbers:
+            return formatted_reg_number
+
+
 def register_voter(request):
     if request.method == 'POST':
         # Get voter data from the form
@@ -101,6 +129,7 @@ def register_voter(request):
         email = request.POST.get('email')
         address = request.POST.get('address')
         profile_image = request.FILES.get('profile_image')
+        reg_number = create_reg_number()
 
         # Decode fingerprint data if required
         """if fingerprint_data:
@@ -114,6 +143,7 @@ def register_voter(request):
                 address=address,
                 email=email,
                 profile_image=profile_image,
+                voter_reg_number=reg_number,
             )
             voter.save()  # Save voter instance to the database
 
@@ -125,6 +155,7 @@ def register_voter(request):
                         f"Name: {name}\n"
                         f"DOB: {dob}\n"
                         f"Address: {address}\n\n"
+                        f"REGISTRATION NUMBER: {reg_number}\n\n"
                         f"You will be updated regularly.",
                 from_email='no-reply@ncdc.gov.ng',
                 recipient_list=[email],
@@ -145,35 +176,33 @@ def capture_print(request):
     voters = Voter.objects.filter(
         Q(fingerprint_image__isnull=True) | Q(fingerprint_image=''),
         Q(fingerprint_template__isnull=True) | Q(fingerprint_template='')
-    )  # Fetch all voters
+    )
 
     if request.method == 'POST':
-        voter_id = request.POST.get('voter_id')  # Get selected voter ID
-        fingerprint_data = request.POST.get('fingerprint_data')  # Get fingerprint data as base64 string
+        voter_id = request.POST.get('voter_id')
+        fingerprint_image = request.FILES.get('fingerprint_image')
 
-        if not voter_id or not fingerprint_data:
-            return JsonResponse({'success': False, 'message': 'Invalid voter ID or fingerprint data'})
+        if not voter_id or not fingerprint_image:
+            return JsonResponse({'success': False, 'message': 'Invalid voter ID or fingerprint image'})
 
         # Find the voter by ID
         voter = get_object_or_404(Voter, id=voter_id)
 
         try:
-            # Decode fingerprint base64 data to image
-            if ',' in fingerprint_data:
-                fingerprint_data = fingerprint_data.split(',')[1]  # Remove the data URL prefix if present
+            # Create the fingerprints directory if it doesn't exist
+            os.makedirs('fingerprints', exist_ok=True)
 
-            fingerprint_image_data = base64.b64decode(fingerprint_data)
-            fingerprint_image = cv2.imdecode(
-                np.frombuffer(fingerprint_image_data, np.uint8),
-                cv2.IMREAD_GRAYSCALE
-            )
+            # Generate a unique filename
+            filename = f"voter_{voter.id}_fingerprint.png"
+            filepath = os.path.join('fingerprints', filename)
 
-            # Save the fingerprint image as a file
-            fingerprint_image_path = f"fingerprints/voter_{voter.id}_fingerprint.jpg"
-            cv2.imwrite(fingerprint_image_path, fingerprint_image)
+            # Save the image directly
+            with open(filepath, 'wb+') as destination:
+                for chunk in fingerprint_image.chunks():
+                    destination.write(chunk)
 
             # Update the voter's fingerprint image field
-            voter.fingerprint_image.name = fingerprint_image_path
+            voter.fingerprint_image.name = filepath
             voter.save()
 
             return JsonResponse({'success': True, 'message': 'Fingerprint captured and saved successfully'})

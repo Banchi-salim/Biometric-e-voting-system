@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.utils import timezone
+from skimage.metrics import structural_similarity
 
 
 class Election(models.Model):
@@ -174,7 +175,7 @@ from django.db import models
 from django.contrib.auth.models import User
 import cv2
 import numpy as np
-from sklearn.metrics import mean_squared_error
+
 import base64
 import io
 
@@ -190,57 +191,10 @@ class Voter(models.Model):
         null=True,
         blank=True
     )
-    fingerprint_template = models.TextField(
-        null=True,
-        blank=True,
-        help_text="Processed fingerprint template data"
-    )
+    voter_reg_number = models.CharField(null=True, max_length=12)
     elections = models.ManyToManyField('Election', related_name="voters")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def verify_fingerprint(self, fingerprint_base64):
-        try:
-            # Remove the data URL prefix if present
-            if ',' in fingerprint_base64:
-                fingerprint_base64 = fingerprint_base64.split(',')[1]
-
-            # Decode base64 to image
-            current_image_data = base64.b64decode(fingerprint_base64)
-            current_image = cv2.imdecode(
-                np.frombuffer(current_image_data, np.uint8),
-                cv2.IMREAD_GRAYSCALE
-            )
-
-            # Get stored fingerprint
-            if not self.fingerprint_image:
-                return False, "No stored fingerprint found"
-
-            stored_image = cv2.imread(self.fingerprint_image.path, cv2.IMREAD_GRAYSCALE)
-
-            if stored_image is None:
-                return False, "Could not read stored fingerprint"
-
-            # Resize current image to match stored image dimensions
-            current_image_resized = cv2.resize(
-                current_image,
-                (stored_image.shape[1], stored_image.shape[0])
-            )
-
-            # Calculate similarity
-            mse = mean_squared_error(
-                stored_image.flatten(),
-                current_image_resized.flatten()
-            )
-
-            # Threshold for fingerprint match (adjust as needed)
-            if mse < 500:  # Lower threshold means stricter matching
-                return True, "Fingerprint verified successfully"
-
-            return False, "Fingerprint verification failed"
-
-        except Exception as e:
-            return False, str(e)
 
     def __str__(self):
         return self.name

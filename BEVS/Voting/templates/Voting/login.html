@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -127,22 +128,29 @@
 <body>
 <div class="login-container">
     <div class="login-header">
-        <img src="/api/placeholder/120/120" alt="Logo" class="logo">
+        <img src="{% static 'Voting/css/images/logo.jpg' %}" alt="Logo" class="logo">
         <h2>Voter Login</h2>
     </div>
 
-    <p>Place your finger on the scanner to login</p>
-
-    <div class="form-group">
-        <div id="imagediv"></div>
-        <input type="hidden" name="fingerprint_data" id="fingerprint_data">
+    {% csrf_token %}
+    <div class="user_reg_number">
+        <input type="text" id="registration_number" placeholder="please enter your registration number"
+               style="width: 80%; border-radius: 5px; height: 50px;">
+        <div id="reg_error" class="error-message" style="color: red; display: none;"></div>
     </div>
 
-    <div id="statusMessage" class="status-message"></div>
+    <!-- This section will be initially hidden -->
+    <div id="fingerprint_section" style="display: none;">
+        <p>Place your finger on the scanner to login</p>
+
+        <div class="form-group">
+            <div id="imagediv"></div>
+            <input type="hidden" name="fingerprint_data" id="fingerprint_data">
+        </div>
+        <div id="statusMessage" class="status-message"></div>
+    </div>
 </div>
-
 {% csrf_token %}
-
 <script>
     let test;
     let isScanning = false;
@@ -190,50 +198,84 @@
         });
     }
 
-    function verifyFingerprint(fingerprintData) {
+function verifyFingerprint(fingerprintData) {
     // Display the fingerprint image
-    var vDiv = document.getElementById('imagediv');
+    const vDiv = document.getElementById('imagediv');
     vDiv.innerHTML = "";
-    var image = document.createElement("img");
+    const image = document.createElement("img");
     image.src = fingerprintData;
     image.classList.add('scanning-animation');
     vDiv.appendChild(image);
 
-    // Store the fingerprint data
-    document.getElementById('fingerprint_data').value = fingerprintData;
+    // Get the registration number
+    const regNum = document.getElementById('registration_number').value;
 
-    $.ajax({
-        url: '/verify-fingerprint/',
-        type: 'POST',
-        data: {
-            'fingerprint_image': fingerprintData,
-            'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
-        },
-        success: function(response) {
-            if (response.status === 'success') {
-                image.classList.remove('scanning-animation');
-                showStatus("Login successful! Redirecting...", "success");
-                setTimeout(function() {
-                    window.location.href = response.redirect_url;
-                }, 1000);
-            } else {
-                image.classList.remove('scanning-animation');
-                showStatus("Fingerprint not recognized. Please try again.", "error");
-                // Clear the image after a delay
-                setTimeout(function() {
-                    vDiv.innerHTML = "";
-                }, 2000);
+    // Convert the image data to a blob
+    fetch(fingerprintData)
+        .then(response => response.blob())
+        .then(blob => {
+            // Create FormData and append the image
+            const formData = new FormData();
+            formData.append('fingerprint_image', blob, 'fingerprint.png');
+            formData.append('csrfmiddlewaretoken', getCSRFToken());
+            formData.append('registration_number', regNum); // Add the registration number
+
+            // Store the fingerprint data (if needed)
+            const fingerprintDataInput = document.getElementById('fingerprint_data');
+            if (fingerprintDataInput) {
+                fingerprintDataInput.value = fingerprintData;
             }
-        },
-        error: function(xhr, status, error) {
+
+            // Show loader
+            //showLoader();
+
+            // Send to Django for verification
+            $.ajax({
+                url: '/verify-fingerprint/',
+                type: 'POST',
+                data: formData,
+                processData: false, // Don't process the data
+                contentType: false, // Don't set content type
+                success: function(response) {
+                    //hideLoader();
+                    image.classList.remove('scanning-animation');
+                    if (response.status === 'success') {
+                        showStatus("Login successful! Redirecting...", "success");
+                        setTimeout(() => {
+                            window.location.href = response.redirect_url;
+                        }, 1000);
+                    } else {
+                        showStatus(response.message || "Fingerprint not recognized. Please try again.", "error");
+                        clearImage(vDiv);
+                    }
+                },
+                error: function(xhr) {
+                    //hideLoader();
+                    image.classList.remove('scanning-animation');
+                    showStatus(`Error (${xhr.status}): ${xhr.statusText}. Please try again.`, "error");
+                    clearImage(vDiv);
+                }
+            });
+        })
+        .catch(error => {
+            hideLoader();
             image.classList.remove('scanning-animation');
-            showStatus("Error verifying fingerprint. Please try again.", "error");
-            // Clear the image after a delay
-            setTimeout(function() {
-                vDiv.innerHTML = "";
-            }, 2000);
-        }
-    });
+            showStatus("Error processing fingerprint image. Please try again.", "error");
+            clearImage(vDiv);
+        });
+}
+
+// Helper function if not already defined
+function showStatus(message, type) {
+    // If you have a status display element
+    const statusElement = document.getElementById('status-message');
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = `status-message ${type}`;
+    } else {
+        // Fallback to alert if no status element exists
+        alert(message);
+    }
 }
     function showStatus(message, type) {
         const statusDiv = document.getElementById('statusMessage');
@@ -249,5 +291,60 @@
     }
 
 </script>
+<script>
+    document.getElementById('registration_number').addEventListener('input', function() {
+        // Clear error message when user types
+        document.getElementById('reg_error').style.display = 'none';
+    });
+
+    document.getElementById('registration_number').addEventListener('blur', function() {
+        const regNumber = this.value.trim();
+        if (regNumber) {
+            validateRegistration(regNumber);
+        }
+    });
+
+    function validateRegistration(regNumber) {
+        // Get CSRF token
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch('/validate-registration/', {  // Replace with your actual validation URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                registration_number: regNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                // Show fingerprint section if registration is valid
+                document.getElementById('fingerprint_section').style.display = 'block';
+            } else {
+                // Show error message
+                alert(data.message)
+                const errorDiv = document.getElementById('reg_error');
+                errorDiv.textContent = data.message || 'Invalid registration number';
+                errorDiv.style.display = 'block';
+                // Hide fingerprint section
+                document.getElementById('fingerprint_section').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorDiv = document.getElementById('reg_error');
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        });
+    }
+</script>
+<!-- Include SDK JS file -->
+<script src="{% static 'Admin/js/es6-shim.js' %}"></script>
+<script src="{% static 'Admin/js/websdk.client.bundle.min.js' %}"></script>
+<script src="{% static 'Admin/js/fingerprint.sdk.min.js' %}"></script>
+<script src="{% static 'Admin/js/app.js' %}"></script>
 </body>
 </html>

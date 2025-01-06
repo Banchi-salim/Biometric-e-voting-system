@@ -198,50 +198,66 @@ function toggle_visibility(ids) {
 }
 
 
+// JavaScript/jQuery code
 $("#save").on("click", function () {
     if (
-        localStorage.getItem("imageSrc") == "" ||
-        localStorage.getItem("imageSrc") == null ||
+        !document.getElementById("imagediv") ||
         document.getElementById("imagediv").innerHTML == ""
     ) {
         alert("Error -> Fingerprint not available");
-    } else {
-        const voterId = $("#voter").val(); // Get selected voter ID
-        if (!voterId) {
-            alert("Please select a voter.");
-            return;
-        }
-
-        const fingerprintData = localStorage.getItem("imageSrc"); // Get fingerprint data
-
-        // Send fingerprint and voter ID to Django view
-        $.ajax({
-            url: "/capture-print/", // Update to match your Django URL
-            type: "POST",
-            headers: {
-                "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(), // Include CSRF token
-            },
-            data: {
-                voter_id: voterId,
-                fingerprint_data: fingerprintData,
-            },
-            success: function (response) {
-                if (response.success) {
-                    alert("Fingerprint saved successfully!");
-                    // Optionally, clear the imagediv
-                    document.getElementById("imagediv").innerHTML = "";
-                    localStorage.removeItem("imageSrc");
-                } else {
-                    alert("Error: " + response.message);
-                }
-            },
-            error: function (xhr, status, error) {
-                alert("An error occurred: " + error);
-            },
-        });
+        return;
     }
-});
 
+    const voterId = $("#voter").val();
+    if (!voterId) {
+        alert("Please select a voter.");
+        return;
+    }
+
+    // Get the image from imagediv
+    const imgElement = document.getElementById("imagediv").querySelector("img");
+    if (!imgElement) {
+        alert("No fingerprint image found");
+        return;
+    }
+
+    // Convert the image to a blob
+    fetch(imgElement.src)
+        .then(response => response.blob())
+        .then(blob => {
+            // Create FormData and append the image and voter ID
+            const formData = new FormData();
+            formData.append('voter_id', voterId);
+            formData.append('fingerprint_image', blob, 'fingerprint.png');
+
+            // Send to Django
+            $.ajax({
+                url: "/admin/capture-print/",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+                },
+                data: formData,
+                processData: false,  // Don't process the data
+                contentType: false,  // Don't set content type
+                success: function (response) {
+                    if (response.success) {
+                        alert("Fingerprint saved successfully!");
+                        document.getElementById("imagediv").innerHTML = "";
+                        localStorage.removeItem("imageSrc");
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert("An error occurred: " + error);
+                },
+            });
+        })
+        .catch(error => {
+            alert("Error processing image: " + error);
+        });
+});
 
 function populateReaders(readersArray) {
         var _deviceInfoTable = document.getElementById("deviceInfo");

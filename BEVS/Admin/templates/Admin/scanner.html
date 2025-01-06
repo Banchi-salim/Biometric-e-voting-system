@@ -43,7 +43,8 @@
                         data-name="{{ voter.name }}"
                         data-address="{{ voter.address }}"
                         data-dob="{{ voter.dob }}"
-                        data-email="{{ voter.email }}">
+                        data-email="{{ voter.email }}"
+                        data-image="{{ voter.image }}">
                     {{ voter.name }}
                 </option>
                 {% endfor %}
@@ -51,12 +52,17 @@
         </div>
 
         <!-- Voter Details -->
-        <div id="voterDetails" style="margin-top: 20px; display: none;">
-            <h4>Voter Details</h4>
-            <p><strong>Name:</strong> <span id="voterName"></span></p>
-            <p><strong>Address:</strong> <span id="voterAddress"></span></p>
-            <p><strong>Date of Birth:</strong> <span id="voterDob"></span></p>
-            <p><strong>Email:</strong> <span id="voterEmail"></span></p>
+        <div id="voterDetails" style="margin-top: 20px;">
+            <div id="left-column">
+                <h4>Voter Details</h4>
+                <p><strong>Name:</strong> <span id="voterName"></span></p>
+                <p><strong>Address:</strong> <span id="voterAddress"></span></p>
+                <p><strong>Date of Birth:</strong> <span id="voterDob"></span></p>
+                <p><strong>Email:</strong> <span id="voterEmail"></span></p>
+            </div>
+            <div id="right-column">
+                <img src="" id="voterImage" alt="Voter Image" style="max-width: 100%; height: auto;">
+            </div>
         </div>
 
 
@@ -175,7 +181,31 @@
     </div>
 
 </div>
+<style>
+   #voterDetails {
+    display: none;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-top: 20px;
+    }
 
+    #left-column {
+        flex: 1;
+    }
+
+    #right-column {
+        flex: 1;
+        text-align: center;
+    }
+
+    #right-column img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+    }
+
+</style>
 <script src="{% static 'Admin/lib/jquery.min.js' %}"></script>
 <script src="{% static 'Admin/lib/bootstrap.min.js' %}"></script>
 <script src="{% static 'Admin/js/es6-shim.js' %}"></script>
@@ -192,14 +222,15 @@
         const voterAddress = selectedOption.getAttribute("data-address");
         const voterDob = selectedOption.getAttribute("data-dob");
         const voterEmail = selectedOption.getAttribute("data-email");
+        const voterImage = selectedOption.getAttribute('data-image')
 
         if (voterName) {
             document.getElementById("voterName").innerText = voterName;
             document.getElementById("voterAddress").innerText = voterAddress;
             document.getElementById("voterDob").innerText = voterDob;
             document.getElementById("voterEmail").innerText = voterEmail;
-
-            voterDetailsDiv.style.display = "block";
+            document.getElementById("voterImage").src = voterImage;
+            voterDetailsDiv.style.display = "flex";
         } else {
             voterDetailsDiv.style.display = "none";
         }
