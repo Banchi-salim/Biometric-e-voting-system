@@ -1,38 +1,43 @@
 {% extends 'Admin/base.html' %}
 {% load static %}
 {% block title %}Admin Dashboard - Home{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'Admin/css/home.css' %}">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'Admin/css/home.css' %}">{% endblock %}
 {% block content %}
 
-    <!-- welcome text div -->
-    <div class="welcometxt">
-        <h2>Welcome</h2>
-    </div>
+<!-- welcome text div -->
+<div class="welcometxt">
+    <h2>Welcome</h2>
+</div>
 
 
-    <!-- ongoing election div-->
-    <div class="container">
-        <div class="main-content">
-            <h2>Ongoing Election</h2>
-            <div class="carousel">
-                {% for election in elections %}
-                <div class="carousel-item">
-                    <h3>{{ election.title }}</h3>
-                    <div class="election-info">
-                        {% for candidate in election.candidates.all %}
-                        <div class="candidate">
-                            <img src="{{ candidate.photo.url }}" alt="{{ candidate.name }}">
-                            <p>{{ candidate.name }}</p>
-                            <p>Total votes: <span id="votes-{{ candidate.id }}">{{ candidate.votes }}</span></p>
-                        </div>
-                        {% endfor %}
+<!-- ongoing election div-->
+<div class="container">
+    <div class="main-content">
+        <h2>Ongoing Election</h2>
+        {% for election in elections %}
+        <div class="election-section">
+            <h3>{{ election.title }}</h3>
+            <div class="candidates-grid">
+                {% for candidate in election.candidates.all %}
+                <div class="candidate-column">
+                    <div class="candidate-card">
+                        <img src="{{ candidate.image.url }}" alt="{{ candidate.name }}">
+                        <h4>{{ candidate.name }}</h4>
+                        <p class="vote-count">Total votes:
+                            <span id="votes-{{ candidate.id }}">{{ candidate.votes }}</span>
+                        </p>
                     </div>
-                    <canvas id="voteChart-{{ election.id }}"></canvas>
                 </div>
                 {% endfor %}
             </div>
+            <div class="chart-container">
+                <canvas id="voteChart-{{ election.id }}"></canvas>
+            </div>
         </div>
+        {% endfor %}
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'Admin/js/vote_script.js'%}"></script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'Admin/js/vote_script.js'%}"></script>
 {% endblock %}
