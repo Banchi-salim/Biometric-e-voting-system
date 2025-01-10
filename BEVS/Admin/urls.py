@@ -1,5 +1,8 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 app_name = 'admin'
 urlpatterns = [
@@ -15,3 +18,13 @@ urlpatterns = [
     path('capture-print/', views.capture_print, name='capture_print'),
     path('logout/', views.logout_view, name='logout'),
 ]
+
+
+# Serve media files for different folders.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Add manual mappings for other scattered folders:
+    urlpatterns += static('/candidates/', document_root= settings.BASE_DIR / 'candidates')
+    urlpatterns += static('/fingerprints/', document_root=settings.BASE_DIR / 'fingerprints')
+    urlpatterns += static('/profile_images/', document_root=settings.BASE_DIR / 'profile_images')
+    urlpatterns += static('/voter_images/', document_root=settings.BASE_DIR / 'voter_images')

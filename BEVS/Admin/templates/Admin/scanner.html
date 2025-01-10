@@ -44,7 +44,7 @@
                         data-address="{{ voter.address }}"
                         data-dob="{{ voter.dob }}"
                         data-email="{{ voter.email }}"
-                        data-image="{{ voter.image }}">
+                        data-image="{{ voter.profile_image }}">
                     {{ voter.name }}
                 </option>
                 {% endfor %}
@@ -225,11 +225,14 @@
         const voterImage = selectedOption.getAttribute('data-image')
 
         if (voterName) {
+            const baseUrl = window.location.origin;
+            const voterImagePath = `${baseUrl}/media/`;
+
             document.getElementById("voterName").innerText = voterName;
             document.getElementById("voterAddress").innerText = voterAddress;
             document.getElementById("voterDob").innerText = voterDob;
             document.getElementById("voterEmail").innerText = voterEmail;
-            document.getElementById("voterImage").src = voterImage;
+            document.getElementById("voterImage").src = voterImagePath + voterImage;
             voterDetailsDiv.style.display = "flex";
         } else {
             voterDetailsDiv.style.display = "none";

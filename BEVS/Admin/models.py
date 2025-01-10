@@ -67,9 +67,9 @@ class Candidate(models.Model):
 
 class Ongoing_Election(models.Model):
     title = models.CharField(max_length=255)
-    candidates = models.ManyToManyField('Candidate')  # Assuming you have a Candidate model
-    election = models.OneToOneField('Election', on_delete=models.CASCADE)  # Link to the Election model
-    is_active = models.BooleanField(default=False)  # Default is False, updated automatically
+    candidates = models.ManyToManyField('Candidate')
+    election = models.OneToOneField('Election', on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

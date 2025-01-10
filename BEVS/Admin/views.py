@@ -180,8 +180,7 @@ def register_voter(request):
 
 def capture_print(request):
     voters = Voter.objects.filter(
-        Q(fingerprint_image__isnull=True) | Q(fingerprint_image=''),
-        Q(fingerprint_template__isnull=True) | Q(fingerprint_template='')
+        Q(fingerprint_image__isnull=True) | Q(fingerprint_image='')
     )
 
     if request.method == 'POST':

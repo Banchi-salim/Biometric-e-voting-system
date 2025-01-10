@@ -22,7 +22,7 @@
                 {% for candidate in election.candidates.all %}
                 <div class="candidate-column">
                     <div class="candidate-card">
-                        <img src="{{ candidate.image.url }}" alt="{{ candidate.name }}">
+                        <img src="{{ candidate.image}}" alt="{{ candidate.name }}">
                         <h4>{{ candidate.name }}</h4>
                         <p class="vote-count">Total votes:
                             <span id="votes-{{ candidate.id }}">{{ candidate.votes }}</span>
