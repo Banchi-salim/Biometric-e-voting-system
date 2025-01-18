@@ -1,3 +1,4 @@
+import logging
 import os
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -6,7 +7,7 @@ from django.contrib import messages
 from Admin.models import Ongoing_Election, Candidate, Voter
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.contrib.auth import login, authenticate
 from skimage.metrics import structural_similarity
 from .models import *
@@ -48,20 +49,11 @@ def election_monitoring(request):
     return render(request, 'Voting/election_monitoring.html', {'ongoing_elections': ongoing_elections})
 
 
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-import cv2
-import numpy as np
-from skimage.metrics import structural_similarity
-from sklearn.metrics import mean_squared_error
-import logging
-
 logger = logging.getLogger(__name__)
 
 
 @csrf_exempt  # Only if CSRF is causing issues in testing
-def verify_fingerprint(request):
+def verify_fingerprint_2(request):
     if request.method == 'POST':
         try:
             # Get the uploaded fingerprint image file and registration number
@@ -138,6 +130,111 @@ def verify_fingerprint(request):
                 'status': 'error',
                 'message': f'Fingerprint verification failed (MSE: {mse:.2f}, SSIM: {ssim_score:.2f})'
             })
+
+        except Exception as e:
+            print(f"Error during verification: {str(e)}")  # Debug logging
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error during verification: {str(e)}'
+            })
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    })
+
+
+def verify_fingerprint(request):
+    if request.method == 'POST':
+        try:
+            fingerprint_file = request.FILES.get('fingerprint_image')
+            registration_number = request.POST.get('registration_number')
+
+            if not fingerprint_file:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No fingerprint image provided'
+                })
+
+            if not registration_number:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Registration number is required'
+                })
+
+            # Retrieve the voter's profile
+            profile = get_object_or_404(Voter, voter_reg_number=registration_number)
+
+            # Read the uploaded fingerprint image
+            current_image_data = fingerprint_file.read()
+            current_image = cv2.imdecode(
+                np.frombuffer(current_image_data, np.uint8),
+                cv2.IMREAD_GRAYSCALE
+            )
+
+            # Get the stored fingerprint image path
+            stored_image_path = str(profile.fingerprint_image)
+
+            # Verify the file exists
+            if not os.path.exists(stored_image_path):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Stored fingerprint file not found at path: {stored_image_path}'
+                })
+
+            # Read the stored image
+            stored_image = cv2.imread(stored_image_path, cv2.IMREAD_GRAYSCALE)
+
+            if stored_image is None:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Could not read stored fingerprint at path: {stored_image_path}'
+                })
+
+            # Initialize SIFT detector
+            sift = cv2.SIFT_create()
+
+            # Find keypoints and descriptors
+            keypoints1, descriptors1 = sift.detectAndCompute(stored_image, None)
+            keypoints2, descriptors2 = sift.detectAndCompute(current_image, None)
+
+            # Initialize FLANN matcher
+            FLANN_INDEX_KDTREE = 1
+            index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+            search_params = dict(checks=10)
+            flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+            # Match descriptors
+            if descriptors1 is not None and descriptors2 is not None:
+                matches = flann.knnMatch(descriptors1, descriptors2, k=2)
+
+                # Apply Lowe's ratio test
+                good_matches = []
+                for m, n in matches:
+                    if m.distance < 0.7 * n.distance:
+                        good_matches.append(m)
+
+                # Calculate match score
+                match_score = (len(good_matches) / len(keypoints1)) * 100 if len(keypoints1) > 0 else 0
+                print(f"Match score: {match_score}")  # Debug logging
+
+                # Verification threshold
+                if match_score > 4:
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Fingerprint verified successfully',
+                        'redirect_url': '/voting/'
+                    })
+
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Fingerprint verification failed (Match score: {match_score:.2f}%)'
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Could not extract features from fingerprints'
+                })
 
         except Exception as e:
             print(f"Error during verification: {str(e)}")  # Debug logging
