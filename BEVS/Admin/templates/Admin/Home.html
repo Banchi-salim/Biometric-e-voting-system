@@ -7,8 +7,23 @@
 
 <!-- welcome text div -->
 <div class="welcometxt">
-    <h2>Welcome</h2>
+    <form method="POST" action="{% url 'admin:admin_dashboard' %}">
+        {% csrf_token %}
+        <button type="submit" id="update_btn">Update Elections</button>
+    </form>
 </div>
+
+<!-- Include SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    {% if message %}
+        Swal.fire({
+            icon: "{% if 'successfully' in message %}success{% else %}error{% endif %}",
+            title: "{% if 'successfully' in message %}Success{% else %}Error{% endif %}",
+            text: "{{ message }}"
+        });
+   {% endif %}
+</script>
 
 
 <!-- ongoing election div-->

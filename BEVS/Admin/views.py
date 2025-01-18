@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 # from django.utils.baseconv import base64
+from .tasks import *
 
 from .models import *
 
@@ -34,7 +35,15 @@ def admin_login_view(request):
 @login_required(login_url='admin:admin_login')
 def admin_dashboard(request):
     elections = Ongoing_Election.objects.filter(is_active=True)
-    return render(request, 'Admin/Home.html', {'elections': elections})
+    if request.method == 'POST':
+        try:
+            manage_election_status_1()  # Execute the function
+            message = "Elections updated successfully."
+        except Exception as e:
+            message = f"An error occurred while updating elections: {str(e)}"
+        return render(request, 'Admin/Home.html', {'elections': elections, 'message':message})
+    else:
+        return render(request, 'Admin/Home.html', {'elections': elections})
 
 
 def vote_data(request, election_id):

@@ -135,7 +135,7 @@
     {% csrf_token %}
     <div class="user_reg_number">
         <input type="text" id="registration_number" placeholder="please enter your registration number"
-               style="width: 80%; border-radius: 5px; height: 50px;">
+               style="width: 80%; border-radius: 5px; height: 50px; text-align: center;">
         <div id="reg_error" class="error-message" style="color: red; display: none;"></div>
     </div>
 
@@ -180,6 +180,13 @@
         this.sdk.onSamplesAcquired = function(s) {
             var samples = JSON.parse(s.samples);
             var base64Image = "data:image/png;base64," + Fingerprint.b64UrlTo64(samples[0]);
+            // Display the fingerprint image
+            const vDiv = document.getElementById('imagediv');
+            vDiv.innerHTML = "";
+            const image = document.createElement("img");
+            image.src = base64Image;
+            image.classList.add('scanning-animation');
+            vDiv.appendChild(image);
             verifyFingerprint(base64Image);
         };
 
@@ -199,16 +206,9 @@
     }
 
 function verifyFingerprint(fingerprintData) {
-    // Display the fingerprint image
-    const vDiv = document.getElementById('imagediv');
-    vDiv.innerHTML = "";
-    const image = document.createElement("img");
-    image.src = fingerprintData;
-    image.classList.add('scanning-animation');
-    vDiv.appendChild(image);
-
     // Get the registration number
     const regNum = document.getElementById('registration_number').value;
+    const image = document.querySelector('#imagediv img');
 
     // Convert the image data to a blob
     fetch(fingerprintData)
@@ -218,7 +218,7 @@ function verifyFingerprint(fingerprintData) {
             const formData = new FormData();
             formData.append('fingerprint_image', blob, 'fingerprint.png');
             formData.append('csrfmiddlewaretoken', getCSRFToken());
-            formData.append('registration_number', regNum); // Add the registration number
+            formData.append('registration_number', regNum);
 
             // Store the fingerprint data (if needed)
             const fingerprintDataInput = document.getElementById('fingerprint_data');
@@ -226,45 +226,46 @@ function verifyFingerprint(fingerprintData) {
                 fingerprintDataInput.value = fingerprintData;
             }
 
-            // Show loader
-            //showLoader();
-
             // Send to Django for verification
-            $.ajax({
-                url: '/verify-fingerprint/',
-                type: 'POST',
-                data: formData,
-                processData: false, // Don't process the data
-                contentType: false, // Don't set content type
-                success: function(response) {
-                    //hideLoader();
-                    image.classList.remove('scanning-animation');
-                    if (response.status === 'success') {
-                        showStatus("Login successful! Redirecting...", "success");
-                        setTimeout(() => {
-                            window.location.href = response.redirect_url;
-                        }, 1000);
-                    } else {
-                        showStatus(response.message || "Fingerprint not recognized. Please try again.", "error");
-                        clearImage(vDiv);
-                    }
-                },
-                error: function(xhr) {
-                    //hideLoader();
-                    image.classList.remove('scanning-animation');
-                    showStatus(`Error (${xhr.status}): ${xhr.statusText}. Please try again.`, "error");
-                    clearImage(vDiv);
-                }
+            return fetch('/verify-fingerprint/', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
             });
         })
+        .then(response => response.json())
+        .then(data => {
+            if (image) {
+                image.classList.remove('scanning-animation');
+            }
+
+            if (data.status === 'success') {
+                showStatus("Login successful! Redirecting...", "success");
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            } else {
+                showStatus(data.message || "Fingerprint not recognized. Please try again.", "error");
+            }
+        })
         .catch(error => {
-            hideLoader();
-            image.classList.remove('scanning-animation');
-            showStatus("Error processing fingerprint image. Please try again.", "error");
-            clearImage(vDiv);
+            if (image) {
+                image.classList.remove('scanning-animation');
+            }
+            let errorMessage = "Error processing fingerprint: ";
+
+            if (error.name === 'TypeError') {
+                errorMessage += "Network or server connection failed";
+            } else if (error.message.includes('HTTP error!')) {
+                errorMessage += error.message;
+            } else {
+                errorMessage += error.message || "Unknown error occurred";
+            }
+
+            console.error('Verification Error:', error);
+            showStatus(errorMessage, "error");
         });
 }
-
 // Helper function if not already defined
 function showStatus(message, type) {
     // If you have a status display element
@@ -290,6 +291,13 @@ function showStatus(message, type) {
         }
     }
 
+    function getCSRFToken() {
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+    return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
 </script>
 <script>
     document.getElementById('registration_number').addEventListener('input', function() {

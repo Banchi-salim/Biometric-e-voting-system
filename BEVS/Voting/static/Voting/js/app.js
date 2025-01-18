@@ -580,36 +580,28 @@ with(document.myForm)
   }
 }
 
-function assignFormat() {
-    // Initialize the currentFormat variable
-    let currentFormat = "";
-
-    // Get the selected value from the dropdown
-    const selectElement = document.getElementById("fingerprint_format");
-    const selectedValue = selectElement.value;
-
-    // Assign the appropriate format based on the selected value
-    switch (selectedValue) {
-        case "Raw":
-            currentFormat = Fingerprint.SampleFormat.Raw;
-            break;
-        case "Intermediate":
-            currentFormat = Fingerprint.SampleFormat.Intermediate;
-            break;
-        case "Compressed":
-            currentFormat = Fingerprint.SampleFormat.Compressed;
-            break;
-        case "PngImage":
-            currentFormat = Fingerprint.SampleFormat.PngImage;
-            break;
-        default:
-            console.error("Invalid format selected");
-            break;
+function assignFormat(){
+    currentFormat = "";
+    with(document.myForm){
+        for(i = 0; i < elements.length; i++){
+            if(elements[i].checked == true){
+                if(elements[i].name == "Raw"){
+                    currentFormat = Fingerprint.SampleFormat.Raw;
+                }
+                if(elements[i].name == "Intermediate"){
+                    currentFormat = Fingerprint.SampleFormat.Intermediate;
+                }
+                if(elements[i].name == "Compressed"){
+                    currentFormat = Fingerprint.SampleFormat.Compressed;
+                }
+                if(elements[i].name == "PngImage"){
+                    currentFormat = Fingerprint.SampleFormat.PngImage;
+                }
+            }
+        }
     }
-
-    // Debug: Output the selected format
-    console.log("Selected Format: ", currentFormat);
 }
+
 
 
 function disableEnableExport(val){

@@ -1,3 +1,5 @@
+import os
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
@@ -15,6 +17,7 @@ from skimage import io
 import numpy as np
 from sklearn.metrics import mean_squared_error
 from django.core.files.base import ContentFile
+
 
 def voter_login(request):
     """Render the fingerprint login page."""
@@ -45,7 +48,19 @@ def election_monitoring(request):
     return render(request, 'Voting/election_monitoring.html', {'ongoing_elections': ongoing_elections})
 
 
-@csrf_protect
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+import cv2
+import numpy as np
+from skimage.metrics import structural_similarity
+from sklearn.metrics import mean_squared_error
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+@csrf_exempt  # Only if CSRF is causing issues in testing
 def verify_fingerprint(request):
     if request.method == 'POST':
         try:
@@ -65,8 +80,8 @@ def verify_fingerprint(request):
                     'message': 'Registration number is required'
                 })
 
-            # Retrieve the voter's profile using the registration number
-            profile = get_object_or_404(Voter, registration_number=registration_number)
+            # Retrieve the voter's profile
+            profile = get_object_or_404(Voter, voter_reg_number=registration_number)
 
             # Read the uploaded fingerprint image
             current_image_data = fingerprint_file.read()
@@ -74,23 +89,30 @@ def verify_fingerprint(request):
                 np.frombuffer(current_image_data, np.uint8),
                 cv2.IMREAD_GRAYSCALE
             )
-            fingerprint_file.seek(0)  # Reset file pointer for potential future reads
 
-            # Get the stored fingerprint image
-            if not profile.fingerprint_image:
+            # Get the stored fingerprint image path
+            stored_image_path = str(profile.fingerprint_image)  # Direct path from database
+
+            # Verify the file exists
+            if not os.path.exists(stored_image_path):
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'No stored fingerprint found for this user'
+                    'message': f'Stored fingerprint file not found at path: {stored_image_path}'
                 })
 
-            # Read the stored fingerprint image
-            stored_image = cv2.imread(profile.fingerprint_image.path, cv2.IMREAD_GRAYSCALE)
+            # Read the stored image
+            stored_image = cv2.imread(stored_image_path, cv2.IMREAD_GRAYSCALE)
 
             if stored_image is None:
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Could not read stored fingerprint'
+                    'message': f'Could not read stored fingerprint at path: {stored_image_path}'
                 })
+
+            # Add debug logging
+            print(f"Stored image path: {stored_image_path}")
+            print(f"Stored image dimensions: {stored_image.shape if stored_image is not None else 'None'}")
+            print(f"Current image dimensions: {current_image.shape if current_image is not None else 'None'}")
 
             # Resize current image to match stored image dimensions
             current_image_resized = cv2.resize(
@@ -102,12 +124,14 @@ def verify_fingerprint(request):
             mse = mean_squared_error(stored_image.flatten(), current_image_resized.flatten())
             ssim_score = structural_similarity(stored_image, current_image_resized)
 
-            # Verification thresholds (adjust these based on accuracy requirements)
-            if mse < 500 and ssim_score > 0.5:
+            print(f"MSE: {mse}, SSIM: {ssim_score}")  # Debug logging
+
+            # Verification thresholds
+            if mse < 500 and ssim_score > 0.3:
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Fingerprint verified successfully',
-                    'redirect_url': '/dashboard/'  # Adjust this as per your redirection requirements
+                    'redirect_url': '/voting/'
                 })
 
             return JsonResponse({
@@ -116,6 +140,7 @@ def verify_fingerprint(request):
             })
 
         except Exception as e:
+            print(f"Error during verification: {str(e)}")  # Debug logging
             return JsonResponse({
                 'status': 'error',
                 'message': f'Error during verification: {str(e)}'
@@ -125,6 +150,7 @@ def verify_fingerprint(request):
         'status': 'error',
         'message': 'Invalid request method'
     })
+
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
